@@ -10,12 +10,10 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
         
-        /* Controlo de Telas (Ocultar/Mostrar) */
         .tela { display: none; }
         .tela.ativa { display: block; }
-        #app-layout { display: none; } /* Esconde o app até fazer login */
+        #app-layout { display: none; } 
 
-        /* Header e Menu */
         .mobile-header { display: flex; align-items: center; background-color: #1a237e; color: white; padding: 15px; }
         .mobile-header button { background: none; border: none; color: white; margin-right: 15px; cursor: pointer; }
         .app-container { display: flex; min-height: calc(100vh - 54px); }
@@ -27,23 +25,22 @@
         .sidebar ul li a:hover { background-color: #e8eaf6; color: #1a237e; border-left: 4px solid #1a237e; }
         .main-content { flex: 1; padding: 20px; width: 100%; }
         
-        /* Formulários e Cards */
         .form-card { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
         .btn-submit { background: #1a237e; color: white; padding: 10px; border: none; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; }
         
-        /* Listas */
         .item-list { display: grid; gap: 10px; margin-top: 15px;}
         .card-item { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #4CAF50; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .card-item.inativo, .card-item.desligado { border-left-color: #9E9E9E; opacity: 0.7; }
         .card-item.em-curso { border-left-color: #FFC107; }
         
-        /* Tela de Login */
         #tela-login { height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #1a237e; }
         .login-box { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
-        #login-erro { background: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-top: 15px; display: none; font-size: 14px; font-weight: bold; border: 1px solid #ef9a9a; }
+        
+        /* Caixa de erro aprimorada */
+        #login-erro { background: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-top: 15px; display: none; font-size: 14px; font-weight: bold; border: 1px solid #ef9a9a; text-align: left;}
 
         @media (min-width: 768px) {
             .mobile-header { display: none; }
@@ -88,7 +85,6 @@
             </nav>
 
             <main class="main-content">
-                
                 <div id="tela-dashboard" class="tela">
                     <h2>Visão Geral</h2><br>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -172,14 +168,16 @@
         import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, where, getDocs, getDoc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Chaves já preenchidas com os seus dados do Firebase
+        // ====================================================================
+        // COLOQUE AQUI AS SUAS CHAVES REAIS EXTRAÍDAS DO CONSOLE DO FIREBASE
+        // ====================================================================
         const firebaseConfig = {
-           apiKey: "AIzaSyAtNpimtkjhbbD8AcN6inb4MSm1BSUhCsg",
-  authDomain: "jb-transportes.firebaseapp.com",
-  projectId: "jb-transportes",
-  storageBucket: "jb-transportes.firebasestorage.app",
-  messagingSenderId: "118086162468",
-  appId: "1:118086162468:web:6d29d0ebcd6fd3b4a2a0b1"
+            apiKey: "AIzaSyAtNpimtkjhbbD8AcN6inb4MSm1BSUhCsg",
+            authDomain: "jb-transportes.firebaseapp.com",
+            projectId: "jb-transportes",
+            storageBucket: "jb-transportes.firebasestorage.app",
+            messagingSenderId: "118086162468",
+            appId: "1:118086162468:web:6d29d0ebcd6fd3b4a2a0b1"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -206,7 +204,7 @@
             }
         });
 
-        // ====== LÓGICA DE LOGIN ATUALIZADA COM DIAGNÓSTICO ======
+        // ====== LÓGICA DE LOGIN COM DIAGNÓSTICO ======
         document.getElementById('form-login').addEventListener('submit', (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
@@ -228,7 +226,9 @@
                 if(error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
                     msgErro.innerHTML = "❌ <b>Acesso Negado:</b> E-mail ou senha incorretos.";
                 } else if(error.code === 'auth/unauthorized-domain') {
-                    msgErro.innerHTML = "❌ <b>Bloqueio de Segurança:</b> O seu site GitHub não está autorizado no Firebase.<br><br>Vá ao Firebase > Authentication > Settings (Configurações) > Authorized Domains, e adicione: <b>thiagomiranda-debug.github.io</b>";
+                    msgErro.innerHTML = "❌ <b>Bloqueio de Segurança:</b> O seu site não está autorizado.<br>Vá ao Firebase > Authentication > Settings > Authorized Domains e adicione o seu link do GitHub.";
+                } else if(error.code === 'auth/invalid-api-key') {
+                    msgErro.innerHTML = "❌ <b>Erro Crítico:</b> A sua chave API do Firebase está errada ou em branco no código.";
                 } else {
                     msgErro.innerHTML = "❌ <b>Erro:</b> " + error.code;
                 }
@@ -340,4 +340,3 @@
     </script>
 </body>
 </html>
-
