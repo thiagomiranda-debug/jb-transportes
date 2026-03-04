@@ -6,14 +6,12 @@
     <title>Jb Transportes - Gestão de Frota</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        /* ================= ESTILOS VISUAIS (CSS) ================= */
+        /* ================= ESTILOS VISUAIS ================= */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
-        
         .tela { display: none; }
         .tela.ativa { display: block; }
         #app-layout { display: none; } 
-
         .mobile-header { display: flex; align-items: center; background-color: #1a237e; color: white; padding: 15px; }
         .mobile-header button { background: none; border: none; color: white; margin-right: 15px; cursor: pointer; }
         .app-container { display: flex; min-height: calc(100vh - 54px); }
@@ -24,29 +22,19 @@
         .sidebar ul li a { display: flex; align-items: center; padding: 15px 20px; color: #555; text-decoration: none; border-bottom: 1px solid #eee; cursor: pointer; }
         .sidebar ul li a:hover { background-color: #e8eaf6; color: #1a237e; border-left: 4px solid #1a237e; }
         .main-content { flex: 1; padding: 20px; width: 100%; }
-        
         .form-card { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
         .btn-submit { background: #1a237e; color: white; padding: 10px; border: none; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; }
-        
         .item-list { display: grid; gap: 10px; margin-top: 15px;}
         .card-item { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #4CAF50; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .card-item.inativo, .card-item.desligado { border-left-color: #9E9E9E; opacity: 0.7; }
         .card-item.em-curso { border-left-color: #FFC107; }
-        
         #tela-login { height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #1a237e; }
         .login-box { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
-        
-        /* Caixa de erro aprimorada */
         #login-erro { background: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-top: 15px; display: none; font-size: 14px; font-weight: bold; border: 1px solid #ef9a9a; text-align: left;}
-
-        @media (min-width: 768px) {
-            .mobile-header { display: none; }
-            .sidebar { position: relative; left: 0; height: 100vh; }
-            .btn-mobile-close { display: none; }
-        }
+        @media (min-width: 768px) { .mobile-header { display: none; } .sidebar { position: relative; left: 0; height: 100vh; } .btn-mobile-close { display: none; } }
     </style>
 </head>
 <body>
@@ -68,7 +56,6 @@
             <button onclick="document.getElementById('sidebar').classList.add('open')"><span class="material-icons">menu</span></button>
             <h1>Jb Transportes</h1>
         </header>
-
         <div class="app-container">
             <nav class="sidebar" id="sidebar">
                 <div class="sidebar-header">
@@ -83,7 +70,6 @@
                     <li><a onclick="fazerLogout()"><span class="material-icons" style="margin-right:10px;">logout</span> Sair</a></li>
                 </ul>
             </nav>
-
             <main class="main-content">
                 <div id="tela-dashboard" class="tela">
                     <h2>Visão Geral</h2><br>
@@ -105,10 +91,7 @@
                                 <div class="form-group" style="flex:1;"><label>Ano</label><input type="number" id="v-ano" required></div>
                                 <div class="form-group" style="flex:1;"><label>KM Atual</label><input type="number" id="v-km" required></div>
                             </div>
-                            <div class="form-group">
-                                <label>Status</label>
-                                <select id="v-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
-                            </div>
+                            <div class="form-group"><label>Status</label><select id="v-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
                             <button type="submit" class="btn-submit">Salvar Veículo</button>
                         </form>
                     </div>
@@ -137,20 +120,16 @@
                     <h2>Controle de Viagens</h2><br>
                     <div class="form-card">
                         <form id="form-viagem">
-                            <input type="hidden" id="vi-id">
-                            <input type="hidden" id="vi-status" value="em_curso">
+                            <input type="hidden" id="vi-id"><input type="hidden" id="vi-status" value="em_curso">
                             <div class="form-group"><label>Veículo</label><select id="vi-veiculo" required></select></div>
                             <div class="form-group"><label>Motorista</label><select id="vi-motorista" required></select></div>
                             <div style="display:flex; gap:10px;">
                                 <div class="form-group" style="flex:1;"><label>KM Inicial</label><input type="number" id="vi-km-ini" required readonly></div>
                                 <div class="form-group" style="flex:1;"><label>Destino</label><input type="text" id="vi-destino" required></div>
                             </div>
-                            
                             <div id="area-retorno" style="display:none; background:#e8f5e9; padding:10px; border-radius:4px; margin-bottom:15px;">
-                                <h4>Registar Retorno</h4><br>
-                                <div class="form-group"><label>KM Final</label><input type="number" id="vi-km-fim"></div>
+                                <h4>Registar Retorno</h4><br><div class="form-group"><label>KM Final</label><input type="number" id="vi-km-fim"></div>
                             </div>
-
                             <button type="submit" class="btn-submit" id="btn-salvar-viagem">Registrar Saída</button>
                             <button type="button" onclick="cancelarViagem()" id="btn-cancelar-viagem" style="display:none; width:100%; margin-top:10px; padding:10px; cursor:pointer;">Cancelar Edição</button>
                         </form>
@@ -158,7 +137,6 @@
                     <h3>Diário de Viagens</h3>
                     <div id="lista-viagens" class="item-list"></div>
                 </div>
-
             </main>
         </div>
     </div>
@@ -168,9 +146,6 @@
         import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, where, getDocs, getDoc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // ====================================================================
-        // COLOQUE AQUI AS SUAS CHAVES REAIS EXTRAÍDAS DO CONSOLE DO FIREBASE
-        // ====================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyAtNpimtkjhbbD8AcN6inb4MSm1BSUhCsg",
             authDomain: "jb-transportes.firebaseapp.com",
@@ -192,8 +167,10 @@
             if(telaId === 'viagens') carregarDropdownsViagem();
         };
 
+        // ====== ARMADILHA DE DETEÇÃO ======
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                alert("🟢 SESSÃO ATIVADA! O utilizador foi reconhecido. A abrir o sistema...");
                 document.getElementById('tela-login').classList.remove('ativa');
                 document.getElementById('app-layout').style.display = 'block';
                 window.navegar('dashboard');
@@ -204,7 +181,6 @@
             }
         });
 
-        // ====== LÓGICA DE LOGIN COM DIAGNÓSTICO ======
         document.getElementById('form-login').addEventListener('submit', (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
@@ -217,126 +193,39 @@
 
             signInWithEmailAndPassword(auth, email, senha)
             .then(() => {
+                alert("✅ SUCESSO! O Firebase confirmou que a senha está correta.");
                 btnSubmit.innerText = 'Entrar no Sistema';
             })
             .catch((error) => {
+                alert("❌ ERRO INTERNO DO FIREBASE: " + error.code + "\n\nIsto significa que o Google rejeitou a ligação. Motivo: " + error.message);
                 btnSubmit.innerText = 'Entrar no Sistema';
                 msgErro.style.display = 'block';
-
-                if(error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
-                    msgErro.innerHTML = "❌ <b>Acesso Negado:</b> E-mail ou senha incorretos.";
-                } else if(error.code === 'auth/unauthorized-domain') {
-                    msgErro.innerHTML = "❌ <b>Bloqueio de Segurança:</b> O seu site não está autorizado.<br>Vá ao Firebase > Authentication > Settings > Authorized Domains e adicione o seu link do GitHub.";
-                } else if(error.code === 'auth/invalid-api-key') {
-                    msgErro.innerHTML = "❌ <b>Erro Crítico:</b> A sua chave API do Firebase está errada ou em branco no código.";
-                } else {
-                    msgErro.innerHTML = "❌ <b>Erro:</b> " + error.code;
-                }
+                msgErro.innerHTML = "❌ <b>Erro:</b> " + error.code;
             });
         });
 
         window.fazerLogout = () => signOut(auth);
 
-        // MÓDULO: VEÍCULOS
+        // Funções de Veículos, Motoristas e Viagens (Mantidas iguais)
         const formVeiculo = document.getElementById('form-veiculo');
-        formVeiculo.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('v-id').value;
-            const dados = { placa: document.getElementById('v-placa').value.toUpperCase(), modelo: document.getElementById('v-modelo').value, ano: document.getElementById('v-ano').value, km_atual: parseFloat(document.getElementById('v-km').value), status: document.getElementById('v-status').value };
-            if(id) await updateDoc(doc(db, "veiculos", id), dados); else await addDoc(collection(db, "veiculos"), dados);
-            formVeiculo.reset(); document.getElementById('v-id').value = '';
-        });
-
-        onSnapshot(collection(db, "veiculos"), (snap) => {
-            const lista = document.getElementById('lista-veiculos'); lista.innerHTML = '';
-            snap.forEach(doc => { const v = doc.data(); lista.innerHTML += `<div class="card-item ${v.status}" onclick="editarVeiculo('${doc.id}','${v.placa}','${v.modelo}','${v.ano}',${v.km_atual},'${v.status}')" style="cursor:pointer;"><h4>${v.modelo} (${v.placa})</h4><p>KM: ${v.km_atual} | Status: ${v.status}</p></div>`; });
-        });
-
+        formVeiculo.addEventListener('submit', async (e) => { e.preventDefault(); const id = document.getElementById('v-id').value; const dados = { placa: document.getElementById('v-placa').value.toUpperCase(), modelo: document.getElementById('v-modelo').value, ano: document.getElementById('v-ano').value, km_atual: parseFloat(document.getElementById('v-km').value), status: document.getElementById('v-status').value }; if(id) await updateDoc(doc(db, "veiculos", id), dados); else await addDoc(collection(db, "veiculos"), dados); formVeiculo.reset(); document.getElementById('v-id').value = ''; });
+        onSnapshot(collection(db, "veiculos"), (snap) => { const lista = document.getElementById('lista-veiculos'); lista.innerHTML = ''; snap.forEach(doc => { const v = doc.data(); lista.innerHTML += `<div class="card-item ${v.status}" onclick="editarVeiculo('${doc.id}','${v.placa}','${v.modelo}','${v.ano}',${v.km_atual},'${v.status}')" style="cursor:pointer;"><h4>${v.modelo} (${v.placa})</h4><p>KM: ${v.km_atual} | Status: ${v.status}</p></div>`; }); });
         window.editarVeiculo = (id, p, m, a, km, s) => { document.getElementById('v-id').value = id; document.getElementById('v-placa').value = p; document.getElementById('v-modelo').value = m; document.getElementById('v-ano').value = a; document.getElementById('v-km').value = km; document.getElementById('v-status').value = s; };
 
-        // MÓDULO: MOTORISTAS
         const formMotorista = document.getElementById('form-motorista');
-        formMotorista.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('m-id').value;
-            const dados = { nome: document.getElementById('m-nome').value, cnh: document.getElementById('m-cnh').value, status: document.getElementById('m-status').value };
-            if(id) await updateDoc(doc(db, "motoristas", id), dados); else await addDoc(collection(db, "motoristas"), dados);
-            formMotorista.reset(); document.getElementById('m-id').value = '';
-        });
-
-        onSnapshot(collection(db, "motoristas"), (snap) => {
-            const lista = document.getElementById('lista-motoristas'); lista.innerHTML = '';
-            snap.forEach(doc => { const m = doc.data(); lista.innerHTML += `<div class="card-item ${m.status}" onclick="editarMotorista('${doc.id}','${m.nome}','${m.cnh}','${m.status}')" style="cursor:pointer;"><h4>${m.nome}</h4><p>CNH: ${m.cnh} | Status: ${m.status}</p></div>`; });
-        });
-
+        formMotorista.addEventListener('submit', async (e) => { e.preventDefault(); const id = document.getElementById('m-id').value; const dados = { nome: document.getElementById('m-nome').value, cnh: document.getElementById('m-cnh').value, status: document.getElementById('m-status').value }; if(id) await updateDoc(doc(db, "motoristas", id), dados); else await addDoc(collection(db, "motoristas"), dados); formMotorista.reset(); document.getElementById('m-id').value = ''; });
+        onSnapshot(collection(db, "motoristas"), (snap) => { const lista = document.getElementById('lista-motoristas'); lista.innerHTML = ''; snap.forEach(doc => { const m = doc.data(); lista.innerHTML += `<div class="card-item ${m.status}" onclick="editarMotorista('${doc.id}','${m.nome}','${m.cnh}','${m.status}')" style="cursor:pointer;"><h4>${m.nome}</h4><p>CNH: ${m.cnh} | Status: ${m.status}</p></div>`; }); });
         window.editarMotorista = (id, n, c, s) => { document.getElementById('m-id').value = id; document.getElementById('m-nome').value = n; document.getElementById('m-cnh').value = c; document.getElementById('m-status').value = s; };
 
-        // MÓDULO: VIAGENS
         let veiculosMemoria = {};
-        async function carregarDropdownsViagem() {
-            const viVeiculo = document.getElementById('vi-veiculo'); const viMotorista = document.getElementById('vi-motorista');
-            viVeiculo.innerHTML = '<option value="">Selecione o Veículo</option>'; viMotorista.innerHTML = '<option value="">Selecione o Motorista</option>';
-            const snapV = await getDocs(query(collection(db, "veiculos"), where("status", "==", "ativo")));
-            snapV.forEach(d => { veiculosMemoria[d.id] = d.data(); viVeiculo.innerHTML += `<option value="${d.id}">${d.data().placa} - ${d.data().modelo}</option>`; });
-            const snapM = await getDocs(query(collection(db, "motoristas"), where("status", "==", "ativo")));
-            snapM.forEach(d => { viMotorista.innerHTML += `<option value="${d.id}">${d.data().nome}</option>`; });
-        }
-
+        async function carregarDropdownsViagem() { const viVeiculo = document.getElementById('vi-veiculo'); const viMotorista = document.getElementById('vi-motorista'); viVeiculo.innerHTML = '<option value="">Selecione o Veículo</option>'; viMotorista.innerHTML = '<option value="">Selecione o Motorista</option>'; const snapV = await getDocs(query(collection(db, "veiculos"), where("status", "==", "ativo"))); snapV.forEach(d => { veiculosMemoria[d.id] = d.data(); viVeiculo.innerHTML += `<option value="${d.id}">${d.data().placa} - ${d.data().modelo}</option>`; }); const snapM = await getDocs(query(collection(db, "motoristas"), where("status", "==", "ativo"))); snapM.forEach(d => { viMotorista.innerHTML += `<option value="${d.id}">${d.data().nome}</option>`; }); }
         document.getElementById('vi-veiculo').addEventListener('change', (e) => { const vId = e.target.value; document.getElementById('vi-km-ini').value = vId ? veiculosMemoria[vId].km_atual : ''; });
+        document.getElementById('form-viagem').addEventListener('submit', async (e) => { e.preventDefault(); const id = document.getElementById('vi-id').value; const status = document.getElementById('vi-status').value; const cbVeic = document.getElementById('vi-veiculo'); const cbMot = document.getElementById('vi-motorista'); let dados = { veiculo_id: cbVeic.value, veiculo_nome: cbVeic.options[cbVeic.selectedIndex].text, motorista_id: cbMot.value, motorista_nome: cbMot.options[cbMot.selectedIndex].text, km_inicial: parseFloat(document.getElementById('vi-km-ini').value), destino: document.getElementById('vi-destino').value, status: status, data_atualizacao: new Date().toISOString() }; if (status === 'concluida') { const kmF = parseFloat(document.getElementById('vi-km-fim').value); if (kmF <= dados.km_inicial) { alert("KM Final deve ser maior que KM Inicial!"); return; } dados.km_final = kmF; dados.distancia = kmF - dados.km_inicial; await updateDoc(doc(db, "veiculos", dados.veiculo_id), { km_atual: kmF }); } if(id) await updateDoc(doc(db, "viagens", id), dados); else { dados.data_saida = new Date().toISOString(); await addDoc(collection(db, "viagens"), dados); } window.cancelarViagem(); });
+        onSnapshot(collection(db, "viagens"), (snap) => { const lista = document.getElementById('lista-viagens'); lista.innerHTML = ''; snap.forEach(doc => { const v = doc.data(); const btnRetorno = v.status === 'em_curso' ? `<button onclick="prepararRetorno('${doc.id}')" style="margin-top:5px; background:#1a237e; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Registar Retorno</button>` : `<p><b>${v.distancia} km rodados</b></p>`; lista.innerHTML += `<div class="card-item ${v.status.replace('_','-')}"><h4>${v.destino}</h4><p>${v.veiculo_nome} | ${v.motorista_nome}</p><p>Saída KM: ${v.km_inicial}</p>${btnRetorno}</div>`; }); });
+        window.prepararRetorno = async (id) => { const v = (await getDoc(doc(db, "viagens", id))).data(); document.getElementById('vi-id').value = id; document.getElementById('vi-status').value = 'concluida'; document.getElementById('vi-veiculo').value = v.veiculo_id; document.getElementById('vi-motorista').value = v.motorista_id; document.getElementById('vi-km-ini').value = v.km_inicial; document.getElementById('vi-destino').value = v.destino; document.getElementById('vi-veiculo').disabled = true; document.getElementById('vi-motorista').disabled = true; document.getElementById('vi-destino').readOnly = true; document.getElementById('area-retorno').style.display = 'block'; document.getElementById('vi-km-fim').required = true; document.getElementById('btn-salvar-viagem').innerText = "Finalizar Viagem"; document.getElementById('btn-cancelar-viagem').style.display = "block"; window.scrollTo(0,0); };
+        window.cancelarViagem = () => { document.getElementById('form-viagem').reset(); document.getElementById('vi-id').value = ''; document.getElementById('vi-status').value = 'em_curso'; document.getElementById('vi-veiculo').disabled = false; document.getElementById('vi-motorista').disabled = false; document.getElementById('vi-destino').readOnly = false; document.getElementById('area-retorno').style.display = 'none'; document.getElementById('vi-km-fim').required = false; document.getElementById('btn-salvar-viagem').innerText = "Registrar Saída"; document.getElementById('btn-cancelar-viagem').style.display = "none"; };
 
-        document.getElementById('form-viagem').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('vi-id').value; const status = document.getElementById('vi-status').value;
-            const cbVeic = document.getElementById('vi-veiculo'); const cbMot = document.getElementById('vi-motorista');
-            let dados = { veiculo_id: cbVeic.value, veiculo_nome: cbVeic.options[cbVeic.selectedIndex].text, motorista_id: cbMot.value, motorista_nome: cbMot.options[cbMot.selectedIndex].text, km_inicial: parseFloat(document.getElementById('vi-km-ini').value), destino: document.getElementById('vi-destino').value, status: status, data_atualizacao: new Date().toISOString() };
-            if (status === 'concluida') {
-                const kmF = parseFloat(document.getElementById('vi-km-fim').value);
-                if (kmF <= dados.km_inicial) { alert("KM Final deve ser maior que KM Inicial!"); return; }
-                dados.km_final = kmF; dados.distancia = kmF - dados.km_inicial;
-                await updateDoc(doc(db, "veiculos", dados.veiculo_id), { km_atual: kmF }); 
-            }
-            if(id) await updateDoc(doc(db, "viagens", id), dados); else { dados.data_saida = new Date().toISOString(); await addDoc(collection(db, "viagens"), dados); }
-            window.cancelarViagem();
-        });
-
-        onSnapshot(collection(db, "viagens"), (snap) => {
-            const lista = document.getElementById('lista-viagens'); lista.innerHTML = '';
-            snap.forEach(doc => {
-                const v = doc.data(); const btnRetorno = v.status === 'em_curso' ? `<button onclick="prepararRetorno('${doc.id}')" style="margin-top:5px; background:#1a237e; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Registar Retorno</button>` : `<p><b>${v.distancia} km rodados</b></p>`;
-                lista.innerHTML += `<div class="card-item ${v.status.replace('_','-')}"><h4>${v.destino}</h4><p>${v.veiculo_nome} | ${v.motorista_nome}</p><p>Saída KM: ${v.km_inicial}</p>${btnRetorno}</div>`;
-            });
-        });
-
-        window.prepararRetorno = async (id) => {
-            const v = (await getDoc(doc(db, "viagens", id))).data();
-            document.getElementById('vi-id').value = id; document.getElementById('vi-status').value = 'concluida';
-            document.getElementById('vi-veiculo').value = v.veiculo_id; document.getElementById('vi-motorista').value = v.motorista_id;
-            document.getElementById('vi-km-ini').value = v.km_inicial; document.getElementById('vi-destino').value = v.destino;
-            document.getElementById('vi-veiculo').disabled = true; document.getElementById('vi-motorista').disabled = true; document.getElementById('vi-destino').readOnly = true;
-            document.getElementById('area-retorno').style.display = 'block'; document.getElementById('vi-km-fim').required = true;
-            document.getElementById('btn-salvar-viagem').innerText = "Finalizar Viagem"; document.getElementById('btn-cancelar-viagem').style.display = "block";
-            window.scrollTo(0,0);
-        };
-
-        window.cancelarViagem = () => {
-            document.getElementById('form-viagem').reset(); document.getElementById('vi-id').value = ''; document.getElementById('vi-status').value = 'em_curso';
-            document.getElementById('vi-veiculo').disabled = false; document.getElementById('vi-motorista').disabled = false; document.getElementById('vi-destino').readOnly = false;
-            document.getElementById('area-retorno').style.display = 'none'; document.getElementById('vi-km-fim').required = false;
-            document.getElementById('btn-salvar-viagem').innerText = "Registrar Saída"; document.getElementById('btn-cancelar-viagem').style.display = "none";
-        };
-
-        // MÓDULO: DASHBOARD
-        async function carregarDashboard() {
-            try {
-                const snapV = await getCountFromServer(query(collection(db, "veiculos"), where("status", "==", "ativo")));
-                document.getElementById('dash-veiculos').innerText = snapV.data().count;
-                const snapM = await getCountFromServer(query(collection(db, "motoristas"), where("status", "==", "ativo")));
-                document.getElementById('dash-motoristas').innerText = snapM.data().count;
-                const snapViagens = await getDocs(query(collection(db, "viagens"), where("status", "==", "concluida")));
-                let totalKm = 0; snapViagens.forEach(d => totalKm += (d.data().distancia || 0));
-                document.getElementById('dash-km').innerText = totalKm + " km";
-            } catch(e) { console.log(e); }
-        }
+        async function carregarDashboard() { try { const snapV = await getCountFromServer(query(collection(db, "veiculos"), where("status", "==", "ativo"))); document.getElementById('dash-veiculos').innerText = snapV.data().count; const snapM = await getCountFromServer(query(collection(db, "motoristas"), where("status", "==", "ativo"))); document.getElementById('dash-motoristas').innerText = snapM.data().count; const snapViagens = await getDocs(query(collection(db, "viagens"), where("status", "==", "concluida"))); let totalKm = 0; snapViagens.forEach(d => totalKm += (d.data().distancia || 0)); document.getElementById('dash-km').innerText = totalKm + " km"; } catch(e) { console.log(e); } }
     </script>
 </body>
 </html>
