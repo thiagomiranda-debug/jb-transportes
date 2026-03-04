@@ -43,6 +43,7 @@
         /* Tela de Login */
         #tela-login { height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #1a237e; }
         .login-box { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
+        #login-erro { background: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-top: 15px; display: none; font-size: 14px; font-weight: bold; border: 1px solid #ef9a9a; }
 
         @media (min-width: 768px) {
             .mobile-header { display: none; }
@@ -60,7 +61,7 @@
                 <div class="form-group"><input type="email" id="login-email" required placeholder="E-mail de acesso"></div>
                 <div class="form-group"><input type="password" id="login-senha" required placeholder="Senha"></div>
                 <button type="submit" class="btn-submit">Entrar no Sistema</button>
-                <p id="login-erro" style="color: red; margin-top: 10px; display: none;">Dados incorretos.</p>
+                <div id="login-erro">Erro.</div>
             </form>
         </div>
     </div>
@@ -167,40 +168,32 @@
     </div>
 
     <script type="module">
-        // 1. IMPORTAÇÕES DO FIREBASE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, where, getDocs, getDoc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // ==============================================================================
-        // ⚠️ ATENÇÃO: COLE AQUI AS CHAVES QUE VOCÊ VAI GERAR NO FIREBASE NO PASSO 2
-        // ==============================================================================
+        // Chaves já preenchidas com os seus dados do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAtNpimtkjhbbD8AcN6inb4MSm1BSUhCsg",
-  authDomain: "jb-transportes.firebaseapp.com",
-  projectId: "jb-transportes",
-  storageBucket: "jb-transportes.firebasestorage.app",
-  messagingSenderId: "118086162468",
-  appId: "1:118086162468:web:6d29d0ebcd6fd3b4a2a0b1"
+            authDomain: "jb-transportes.firebaseapp.com",
+            projectId: "jb-transportes",
+            storageBucket: "jb-transportes.firebasestorage.app",
+            messagingSenderId: "118086162468",
+            appId: "1:118086162468:web:6d29d0ebcd6fd3b4a2a0b1"
         };
-        // ==============================================================================
 
-        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // 2. NAVEGAÇÃO ENTRE TELAS (Single Page)
         window.navegar = (telaId) => {
             document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
             document.getElementById('tela-' + telaId).classList.add('ativa');
-            document.getElementById('sidebar').classList.remove('open'); // fecha menu no mobile
-            
+            document.getElementById('sidebar').classList.remove('open'); 
             if(telaId === 'dashboard') carregarDashboard();
             if(telaId === 'viagens') carregarDropdownsViagem();
         };
 
-        // 3. AUTENTICAÇÃO E LOGIN
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('tela-login').classList.remove('ativa');
@@ -213,147 +206,104 @@
             }
         });
 
+        // ====== LÓGICA DE LOGIN ATUALIZADA COM DIAGNÓSTICO ======
         document.getElementById('form-login').addEventListener('submit', (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const senha = document.getElementById('login-senha').value;
-            
-            // Alteramos aqui para capturar o erro exato
-            signInWithEmailAndPassword(auth, email, senha).catch((error) => {
-                console.error("ERRO DO FIREBASE:", error.code, error.message);
-                const msgErro = document.getElementById('login-erro');
+            const btnSubmit = document.querySelector('#form-login .btn-submit');
+            const msgErro = document.getElementById('login-erro');
+
+            btnSubmit.innerText = 'Verificando segurança...';
+            msgErro.style.display = 'none';
+
+            signInWithEmailAndPassword(auth, email, senha)
+            .then(() => {
+                btnSubmit.innerText = 'Entrar no Sistema';
+            })
+            .catch((error) => {
+                btnSubmit.innerText = 'Entrar no Sistema';
                 msgErro.style.display = 'block';
-                
-                // Exibe o erro real na tela para facilitar
-                if(error.code === 'auth/invalid-credential') {
-                    msgErro.innerText = "Email ou senha incorretos.";
+
+                if(error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
+                    msgErro.innerHTML = "❌ <b>Acesso Negado:</b> E-mail ou senha incorretos.";
+                } else if(error.code === 'auth/unauthorized-domain') {
+                    msgErro.innerHTML = "❌ <b>Bloqueio de Segurança:</b> O seu site GitHub não está autorizado no Firebase.<br><br>Vá ao Firebase > Authentication > Settings (Configurações) > Authorized Domains, e adicione: <b>thiagomiranda-debug.github.io</b>";
                 } else {
-                    msgErro.innerText = "Erro: " + error.code;
+                    msgErro.innerHTML = "❌ <b>Erro:</b> " + error.code;
                 }
             });
         });
 
         window.fazerLogout = () => signOut(auth);
 
-        // 4. MÓDULO: VEÍCULOS
+        // MÓDULO: VEÍCULOS
         const formVeiculo = document.getElementById('form-veiculo');
         formVeiculo.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('v-id').value;
-            const dados = {
-                placa: document.getElementById('v-placa').value.toUpperCase(),
-                modelo: document.getElementById('v-modelo').value,
-                ano: document.getElementById('v-ano').value,
-                km_atual: parseFloat(document.getElementById('v-km').value),
-                status: document.getElementById('v-status').value
-            };
-            if(id) await updateDoc(doc(db, "veiculos", id), dados);
-            else await addDoc(collection(db, "veiculos"), dados);
+            const dados = { placa: document.getElementById('v-placa').value.toUpperCase(), modelo: document.getElementById('v-modelo').value, ano: document.getElementById('v-ano').value, km_atual: parseFloat(document.getElementById('v-km').value), status: document.getElementById('v-status').value };
+            if(id) await updateDoc(doc(db, "veiculos", id), dados); else await addDoc(collection(db, "veiculos"), dados);
             formVeiculo.reset(); document.getElementById('v-id').value = '';
         });
 
         onSnapshot(collection(db, "veiculos"), (snap) => {
-            const lista = document.getElementById('lista-veiculos');
-            lista.innerHTML = '';
-            snap.forEach(doc => {
-                const v = doc.data();
-                lista.innerHTML += `<div class="card-item ${v.status}" onclick="editarVeiculo('${doc.id}','${v.placa}','${v.modelo}','${v.ano}',${v.km_atual},'${v.status}')" style="cursor:pointer;">
-                    <h4>${v.modelo} (${v.placa})</h4><p>KM: ${v.km_atual} | Status: ${v.status}</p></div>`;
-            });
+            const lista = document.getElementById('lista-veiculos'); lista.innerHTML = '';
+            snap.forEach(doc => { const v = doc.data(); lista.innerHTML += `<div class="card-item ${v.status}" onclick="editarVeiculo('${doc.id}','${v.placa}','${v.modelo}','${v.ano}',${v.km_atual},'${v.status}')" style="cursor:pointer;"><h4>${v.modelo} (${v.placa})</h4><p>KM: ${v.km_atual} | Status: ${v.status}</p></div>`; });
         });
 
-        window.editarVeiculo = (id, p, m, a, km, s) => {
-            document.getElementById('v-id').value = id; document.getElementById('v-placa').value = p;
-            document.getElementById('v-modelo').value = m; document.getElementById('v-ano').value = a;
-            document.getElementById('v-km').value = km; document.getElementById('v-status').value = s;
-        };
+        window.editarVeiculo = (id, p, m, a, km, s) => { document.getElementById('v-id').value = id; document.getElementById('v-placa').value = p; document.getElementById('v-modelo').value = m; document.getElementById('v-ano').value = a; document.getElementById('v-km').value = km; document.getElementById('v-status').value = s; };
 
-        // 5. MÓDULO: MOTORISTAS
+        // MÓDULO: MOTORISTAS
         const formMotorista = document.getElementById('form-motorista');
         formMotorista.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('m-id').value;
-            const dados = {
-                nome: document.getElementById('m-nome').value,
-                cnh: document.getElementById('m-cnh').value,
-                status: document.getElementById('m-status').value
-            };
-            if(id) await updateDoc(doc(db, "motoristas", id), dados);
-            else await addDoc(collection(db, "motoristas"), dados);
+            const dados = { nome: document.getElementById('m-nome').value, cnh: document.getElementById('m-cnh').value, status: document.getElementById('m-status').value };
+            if(id) await updateDoc(doc(db, "motoristas", id), dados); else await addDoc(collection(db, "motoristas"), dados);
             formMotorista.reset(); document.getElementById('m-id').value = '';
         });
 
         onSnapshot(collection(db, "motoristas"), (snap) => {
-            const lista = document.getElementById('lista-motoristas');
-            lista.innerHTML = '';
-            snap.forEach(doc => {
-                const m = doc.data();
-                lista.innerHTML += `<div class="card-item ${m.status}" onclick="editarMotorista('${doc.id}','${m.nome}','${m.cnh}','${m.status}')" style="cursor:pointer;">
-                    <h4>${m.nome}</h4><p>CNH: ${m.cnh} | Status: ${m.status}</p></div>`;
-            });
+            const lista = document.getElementById('lista-motoristas'); lista.innerHTML = '';
+            snap.forEach(doc => { const m = doc.data(); lista.innerHTML += `<div class="card-item ${m.status}" onclick="editarMotorista('${doc.id}','${m.nome}','${m.cnh}','${m.status}')" style="cursor:pointer;"><h4>${m.nome}</h4><p>CNH: ${m.cnh} | Status: ${m.status}</p></div>`; });
         });
 
-        window.editarMotorista = (id, n, c, s) => {
-            document.getElementById('m-id').value = id; document.getElementById('m-nome').value = n;
-            document.getElementById('m-cnh').value = c; document.getElementById('m-status').value = s;
-        };
+        window.editarMotorista = (id, n, c, s) => { document.getElementById('m-id').value = id; document.getElementById('m-nome').value = n; document.getElementById('m-cnh').value = c; document.getElementById('m-status').value = s; };
 
-        // 6. MÓDULO: VIAGENS
+        // MÓDULO: VIAGENS
         let veiculosMemoria = {};
         async function carregarDropdownsViagem() {
-            const viVeiculo = document.getElementById('vi-veiculo');
-            const viMotorista = document.getElementById('vi-motorista');
-            viVeiculo.innerHTML = '<option value="">Selecione o Veículo</option>';
-            viMotorista.innerHTML = '<option value="">Selecione o Motorista</option>';
-            
+            const viVeiculo = document.getElementById('vi-veiculo'); const viMotorista = document.getElementById('vi-motorista');
+            viVeiculo.innerHTML = '<option value="">Selecione o Veículo</option>'; viMotorista.innerHTML = '<option value="">Selecione o Motorista</option>';
             const snapV = await getDocs(query(collection(db, "veiculos"), where("status", "==", "ativo")));
             snapV.forEach(d => { veiculosMemoria[d.id] = d.data(); viVeiculo.innerHTML += `<option value="${d.id}">${d.data().placa} - ${d.data().modelo}</option>`; });
-            
             const snapM = await getDocs(query(collection(db, "motoristas"), where("status", "==", "ativo")));
             snapM.forEach(d => { viMotorista.innerHTML += `<option value="${d.id}">${d.data().nome}</option>`; });
         }
 
-        document.getElementById('vi-veiculo').addEventListener('change', (e) => {
-            const vId = e.target.value;
-            document.getElementById('vi-km-ini').value = vId ? veiculosMemoria[vId].km_atual : '';
-        });
+        document.getElementById('vi-veiculo').addEventListener('change', (e) => { const vId = e.target.value; document.getElementById('vi-km-ini').value = vId ? veiculosMemoria[vId].km_atual : ''; });
 
         document.getElementById('form-viagem').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id = document.getElementById('vi-id').value;
-            const status = document.getElementById('vi-status').value;
-            const cbVeic = document.getElementById('vi-veiculo');
-            const cbMot = document.getElementById('vi-motorista');
-            
-            let dados = {
-                veiculo_id: cbVeic.value, veiculo_nome: cbVeic.options[cbVeic.selectedIndex].text,
-                motorista_id: cbMot.value, motorista_nome: cbMot.options[cbMot.selectedIndex].text,
-                km_inicial: parseFloat(document.getElementById('vi-km-ini').value),
-                destino: document.getElementById('vi-destino').value,
-                status: status, data_atualizacao: new Date().toISOString()
-            };
-
+            const id = document.getElementById('vi-id').value; const status = document.getElementById('vi-status').value;
+            const cbVeic = document.getElementById('vi-veiculo'); const cbMot = document.getElementById('vi-motorista');
+            let dados = { veiculo_id: cbVeic.value, veiculo_nome: cbVeic.options[cbVeic.selectedIndex].text, motorista_id: cbMot.value, motorista_nome: cbMot.options[cbMot.selectedIndex].text, km_inicial: parseFloat(document.getElementById('vi-km-ini').value), destino: document.getElementById('vi-destino').value, status: status, data_atualizacao: new Date().toISOString() };
             if (status === 'concluida') {
                 const kmF = parseFloat(document.getElementById('vi-km-fim').value);
                 if (kmF <= dados.km_inicial) { alert("KM Final deve ser maior que KM Inicial!"); return; }
                 dados.km_final = kmF; dados.distancia = kmF - dados.km_inicial;
-                await updateDoc(doc(db, "veiculos", dados.veiculo_id), { km_atual: kmF }); // Atualiza KM do carro
+                await updateDoc(doc(db, "veiculos", dados.veiculo_id), { km_atual: kmF }); 
             }
-
-            if(id) await updateDoc(doc(db, "viagens", id), dados);
-            else { dados.data_saida = new Date().toISOString(); await addDoc(collection(db, "viagens"), dados); }
-            
+            if(id) await updateDoc(doc(db, "viagens", id), dados); else { dados.data_saida = new Date().toISOString(); await addDoc(collection(db, "viagens"), dados); }
             window.cancelarViagem();
         });
 
         onSnapshot(collection(db, "viagens"), (snap) => {
-            const lista = document.getElementById('lista-viagens');
-            lista.innerHTML = '';
+            const lista = document.getElementById('lista-viagens'); lista.innerHTML = '';
             snap.forEach(doc => {
-                const v = doc.data();
-                const btnRetorno = v.status === 'em_curso' ? `<button onclick="prepararRetorno('${doc.id}')" style="margin-top:5px; background:#1a237e; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Registar Retorno</button>` : `<p><b>${v.distancia} km rodados</b></p>`;
-                lista.innerHTML += `<div class="card-item ${v.status.replace('_','-')}">
-                    <h4>${v.destino}</h4><p>${v.veiculo_nome} | ${v.motorista_nome}</p><p>Saída KM: ${v.km_inicial}</p>${btnRetorno}</div>`;
+                const v = doc.data(); const btnRetorno = v.status === 'em_curso' ? `<button onclick="prepararRetorno('${doc.id}')" style="margin-top:5px; background:#1a237e; color:white; border:none; padding:5px; border-radius:4px; cursor:pointer;">Registar Retorno</button>` : `<p><b>${v.distancia} km rodados</b></p>`;
+                lista.innerHTML += `<div class="card-item ${v.status.replace('_','-')}"><h4>${v.destino}</h4><p>${v.veiculo_nome} | ${v.motorista_nome}</p><p>Saída KM: ${v.km_inicial}</p>${btnRetorno}</div>`;
             });
         });
 
@@ -375,14 +325,13 @@
             document.getElementById('btn-salvar-viagem').innerText = "Registrar Saída"; document.getElementById('btn-cancelar-viagem').style.display = "none";
         };
 
-        // 7. MÓDULO: DASHBOARD
+        // MÓDULO: DASHBOARD
         async function carregarDashboard() {
             try {
                 const snapV = await getCountFromServer(query(collection(db, "veiculos"), where("status", "==", "ativo")));
                 document.getElementById('dash-veiculos').innerText = snapV.data().count;
                 const snapM = await getCountFromServer(query(collection(db, "motoristas"), where("status", "==", "ativo")));
                 document.getElementById('dash-motoristas').innerText = snapM.data().count;
-                
                 const snapViagens = await getDocs(query(collection(db, "viagens"), where("status", "==", "concluida")));
                 let totalKm = 0; snapViagens.forEach(d => totalKm += (d.data().distancia || 0));
                 document.getElementById('dash-km').innerText = totalKm + " km";
