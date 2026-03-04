@@ -12,6 +12,7 @@
         .tela { display: none; }
         .tela.ativa { display: block; }
         #app-layout { display: none; } 
+        
         .mobile-header { display: flex; align-items: center; background-color: #1a237e; color: white; padding: 15px; }
         .mobile-header button { background: none; border: none; color: white; margin-right: 15px; cursor: pointer; }
         .app-container { display: flex; min-height: calc(100vh - 54px); }
@@ -22,24 +23,28 @@
         .sidebar ul li a { display: flex; align-items: center; padding: 15px 20px; color: #555; text-decoration: none; border-bottom: 1px solid #eee; cursor: pointer; }
         .sidebar ul li a:hover { background-color: #e8eaf6; color: #1a237e; border-left: 4px solid #1a237e; }
         .main-content { flex: 1; padding: 20px; width: 100%; }
+        
         .form-card { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
         .btn-submit { background: #1a237e; color: white; padding: 10px; border: none; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; }
+        
         .item-list { display: grid; gap: 10px; margin-top: 15px;}
         .card-item { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #4CAF50; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .card-item.inativo, .card-item.desligado { border-left-color: #9E9E9E; opacity: 0.7; }
         .card-item.em-curso { border-left-color: #FFC107; }
-        #tela-login { height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #1a237e; }
+        
+        #tela-login { height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #1a237e; flex-direction: column; }
         .login-box { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
-        #login-erro { background: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-top: 15px; display: none; font-size: 14px; font-weight: bold; border: 1px solid #ef9a9a; text-align: left;}
+        #login-erro { background: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-top: 15px; display: none; font-size: 14px; font-weight: bold; border: 1px solid #ef9a9a; text-align: center;}
+        
         @media (min-width: 768px) { .mobile-header { display: none; } .sidebar { position: relative; left: 0; height: 100vh; } .btn-mobile-close { display: none; } }
     </style>
 </head>
 <body>
 
-    <div id="tela-login" class="tela ativa">
+    <div id="tela-login">
         <div class="login-box">
             <h2 style="color: #1a237e; margin-bottom: 20px;">Jb Transportes</h2>
             <form id="form-login">
@@ -146,7 +151,6 @@
         import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, where, getDocs, getDoc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // As suas chaves intocáveis
         const firebaseConfig = {
             apiKey: "AIzaSyAtNpimtkjhbbD8AcN6inb4MSm1BSUhCsg",
             authDomain: "jb-transportes.firebaseapp.com",
@@ -168,13 +172,16 @@
             if(telaId === 'viagens') carregarDropdownsViagem();
         };
 
-        // ====== LÓGICA DE LOGIN FORÇADA ======
+        // ====== LÓGICA DE LOGIN COM CORREÇÃO VISUAL ======
         onAuthStateChanged(auth, (user) => {
-            // Se o navegador reconhecer quem está logado de cara, entra.
             if (user) {
-                document.getElementById('tela-login').classList.remove('ativa');
+                // AQUI ESTÁ A CORREÇÃO: Força a tela de login a desaparecer completamente
+                document.getElementById('tela-login').style.display = 'none';
                 document.getElementById('app-layout').style.display = 'block';
                 window.navegar('dashboard');
+            } else {
+                document.getElementById('app-layout').style.display = 'none';
+                document.getElementById('tela-login').style.display = 'flex';
             }
         });
 
@@ -190,27 +197,20 @@
 
             signInWithEmailAndPassword(auth, email, senha)
             .then(() => {
-                // A senha bateu! Forçamos a quebra da tela de login imediatamente:
-                document.getElementById('tela-login').classList.remove('ativa');
-                document.getElementById('app-layout').style.display = 'block';
-                window.navegar('dashboard');
+                btnSubmit.innerText = 'Entrar no Sistema'; // Reseta o botão para a próxima vez
             })
             .catch((error) => {
                 btnSubmit.innerText = 'Entrar no Sistema';
                 msgErro.style.display = 'block';
-                msgErro.innerHTML = "❌ <b>Erro:</b> " + error.message;
+                msgErro.innerHTML = "❌ E-mail ou senha incorretos.";
             });
         });
 
         window.fazerLogout = () => {
-            signOut(auth).then(() => {
-                document.getElementById('app-layout').style.display = 'none';
-                document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
-                document.getElementById('tela-login').classList.add('ativa');
-            });
+            signOut(auth).catch((error) => console.log(error));
         };
 
-        // ====== FUNÇÕES DA FROTA ======
+        // ====== RESTANTE DO CÓDIGO OPERACIONAL ======
         const formVeiculo = document.getElementById('form-veiculo');
         formVeiculo.addEventListener('submit', async (e) => { e.preventDefault(); const id = document.getElementById('v-id').value; const dados = { placa: document.getElementById('v-placa').value.toUpperCase(), modelo: document.getElementById('v-modelo').value, ano: document.getElementById('v-ano').value, km_atual: parseFloat(document.getElementById('v-km').value), status: document.getElementById('v-status').value }; if(id) await updateDoc(doc(db, "veiculos", id), dados); else await addDoc(collection(db, "veiculos"), dados); formVeiculo.reset(); document.getElementById('v-id').value = ''; });
         onSnapshot(collection(db, "veiculos"), (snap) => { const lista = document.getElementById('lista-veiculos'); lista.innerHTML = ''; snap.forEach(doc => { const v = doc.data(); lista.innerHTML += `<div class="card-item ${v.status}" onclick="editarVeiculo('${doc.id}','${v.placa}','${v.modelo}','${v.ano}',${v.km_atual},'${v.status}')" style="cursor:pointer;"><h4>${v.modelo} (${v.placa})</h4><p>KM: ${v.km_atual} | Status: ${v.status}</p></div>`; }); });
@@ -229,7 +229,6 @@
         window.prepararRetorno = async (id) => { const v = (await getDoc(doc(db, "viagens", id))).data(); document.getElementById('vi-id').value = id; document.getElementById('vi-status').value = 'concluida'; document.getElementById('vi-veiculo').value = v.veiculo_id; document.getElementById('vi-motorista').value = v.motorista_id; document.getElementById('vi-km-ini').value = v.km_inicial; document.getElementById('vi-destino').value = v.destino; document.getElementById('vi-veiculo').disabled = true; document.getElementById('vi-motorista').disabled = true; document.getElementById('vi-destino').readOnly = true; document.getElementById('area-retorno').style.display = 'block'; document.getElementById('vi-km-fim').required = true; document.getElementById('btn-salvar-viagem').innerText = "Finalizar Viagem"; document.getElementById('btn-cancelar-viagem').style.display = "block"; window.scrollTo(0,0); };
         window.cancelarViagem = () => { document.getElementById('form-viagem').reset(); document.getElementById('vi-id').value = ''; document.getElementById('vi-status').value = 'em_curso'; document.getElementById('vi-veiculo').disabled = false; document.getElementById('vi-motorista').disabled = false; document.getElementById('vi-destino').readOnly = false; document.getElementById('area-retorno').style.display = 'none'; document.getElementById('vi-km-fim').required = false; document.getElementById('btn-salvar-viagem').innerText = "Registrar Saída"; document.getElementById('btn-cancelar-viagem').style.display = "none"; };
 
-        // MÓDULO: DASHBOARD E VERIFICAÇÃO DE DADOS
         async function carregarDashboard() {
             try {
                 const snapV = await getCountFromServer(query(collection(db, "veiculos"), where("status", "==", "ativo")));
@@ -239,12 +238,7 @@
                 const snapViagens = await getDocs(query(collection(db, "viagens"), where("status", "==", "concluida")));
                 let totalKm = 0; snapViagens.forEach(d => totalKm += (d.data().distancia || 0));
                 document.getElementById('dash-km').innerText = totalKm + " km";
-            } catch(e) { 
-                console.log(e); 
-                if(e.code === 'permission-denied') {
-                    alert("⚠️ O SEU BANCO DE DADOS ESTÁ TRANCADO! \nVá ao console do Firebase > Firestore Database > Regras (Rules) e mude para:\n\nallow read, write: if true;");
-                }
-            } 
+            } catch(e) { console.log(e); } 
         }
     </script>
 </body>
