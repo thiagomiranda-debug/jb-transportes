@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jb Transportes - ERP Logístico v1.5</title>
+    <title>Jb Transportes - ERP Logístico v1.5.1</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -67,7 +67,7 @@
         .resumo-total { font-size: 18px; font-weight: bold; color: #1a237e; border-top: 2px solid #1a237e; padding-top: 10px; margin-top: 10px; display: flex; justify-content: space-between;}
         .lucro-positivo { color: #2e7d32; } .lucro-negativo { color: #c62828; }
 
-        .admin-only { display: none; } /* Essencial para a trava funcionar */
+        .admin-only { display: none; }
 
         @media print { body { background: white; } .sidebar, .mobile-header, .btn-submit, form, .no-print { display: none !important; } .app-container, .main-content { margin: 0; padding: 0; width: 100%; } .tela { display: none; } #tela-relatorios { display: block !important; } }
         @media (min-width: 768px) { .mobile-header { display: none; } .sidebar { position: relative; left: 0; height: 100vh; } .btn-mobile-close { display: none; } }
@@ -78,12 +78,12 @@
     <div id="tela-login">
         <div class="login-box">
             <h2 style="color: #1a237e; margin-bottom: 5px;">Jb Transportes</h2>
-            <p style="font-size: 12px; color: #666; margin-bottom: 20px;">Acesso Restrito v1.5</p>
+            <p style="font-size: 12px; color: #666; margin-bottom: 20px;">Segurança v1.5.1</p>
             <form id="form-login">
                 <div class="form-group"><input type="email" id="login-email" required placeholder="E-mail de acesso"></div>
                 <div class="form-group"><input type="password" id="login-senha" required placeholder="Senha"></div>
                 <button type="submit" class="btn-submit">Entrar no Sistema</button>
-                <div id="login-erro">Erro.</div>
+                <div id="login-erro">Erro na autenticação.</div>
             </form>
         </div>
     </div>
@@ -384,15 +384,14 @@
         
         // ================= NOVO CONTROLE DE ACESSO (RBAC) =================
         let isUserAdmin = false;
-        // 👇 COLOQUE O SEU E-MAIL DE ACESSO ADMIN AQUI DENTRO (pode adicionar mais separando por vírgula) 👇
-        const ADMIN_EMAILS = ["thiagomiranda@outlook.com", "jbmeudes@hotmail.com"];
+        // SEU E-MAIL JÁ ESTÁ CONFIGURADO AQUI
+        const ADMIN_EMAILS = ["thiagomiranda@outlook.com"];
 
         let qtdAlertasMotoristas = 0; let qtdAlertasVeiculos = 0;
         function atualizarPainelGlobalDeAlertas() { document.getElementById('dash-alertas').innerText = (qtdAlertasMotoristas + qtdAlertasVeiculos); }
         async function logAuditoria(acao, detalhes) { try { await addDoc(collection(db, "auditoria"), { data: new Date().toISOString(), user: auth.currentUser?.email || 'desconhecido', acao: acao, detalhes: detalhes }); } catch(e){} }
 
         window.navegar = (telaId) => {
-            // Trava de segurança no JavaScript para evitar que motoristas espertos forcem a navegação pelo console
             if (!isUserAdmin && ['manutencoes', 'custos', 'relatorios'].includes(telaId)) {
                 alert("Acesso restrito à diretoria/administração.");
                 return;
@@ -421,15 +420,15 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Verifica se o e-mail do usuário logado está na lista VIP
+                // Verificação robusta para evitar erros de digitação ou espaços invisíveis
                 isUserAdmin = ADMIN_EMAILS.some(e => e.trim().toLowerCase() === user.email.trim().toLowerCase());
                 
                 document.getElementById('tela-login').style.display = 'none'; 
                 document.getElementById('app-layout').style.display = 'block';
                 
-                // Exibe ou oculta as áreas restritas baseado no nível de acesso
+                // CORREÇÃO: Aplica o estilo "block" em vez de vazio, sobrepondo a trava do CSS.
                 document.querySelectorAll('.admin-only').forEach(el => { 
-                    el.style.display = isUserAdmin ? '' : 'none'; 
+                    el.style.display = isUserAdmin ? 'block' : 'none'; 
                 });
                 
                 window.navegar('dashboard');
@@ -508,7 +507,6 @@
                 }
 
                 let boxAv = avisos.length > 0 ? `<div class="badges-container">${avisos.join('')}</div>` : '';
-                // Se não for admin, não permite clicar para editar
                 let acaoClick = isUserAdmin ? `onclick="editarVeiculo('${documento.id}')" style="cursor:pointer;"` : '';
                 
                 lista.innerHTML += `<div class="card-item ${clAlerta}" ${acaoClick}>
@@ -562,7 +560,7 @@
 
                 lista.innerHTML += `<div class="card-item ${clAlerta}" ${acaoClick}>
                     ${boxAv}<h4>${m.nome}</h4>
-                    <p>Val. CNH: ${m.cnh_val?new Date(m.cnh_val).toLocaleDateString('pt-BR'):'-'} | Tox: ${m.toxicologico?new Date(m.toxicologico).toLocaleDateString('pt-BR'):'-'}</p>
+                    <p>Comissão: ${m.comissao||0}% | Val. CNH: ${m.cnh_val?new Date(m.cnh_val).toLocaleDateString('pt-BR'):'-'} | Tox: ${m.toxicologico?new Date(m.toxicologico).toLocaleDateString('pt-BR'):'-'}</p>
                     ${linkDoc}
                 </div>`; 
             }); 
@@ -610,7 +608,6 @@
                 const v = documento.data(); dbViagens[documento.id] = v;
                 let dataS = v.data_saida ? new Date(v.data_saida).toLocaleString('pt-BR') : '';
                 
-                // Motorista comum pode fechar viagem, mas os detalhes de lucro só aparecem visualmente se for admin
                 let btnFechar = v.status === 'em_curso' ? `<button onclick="abrirModalRetorno('${documento.id}')" class="btn-submit" style="background:#2e7d32; margin-top:10px;">📍 Fechar Viagem</button>` : '';
                 let infoLucro = (v.status === 'concluida' && isUserAdmin) ? `<div style="margin-top:8px; padding:8px; background:#f5f5f5; border-radius:4px;"><p><b>Média:</b> ${(v.media_kml||0).toFixed(1)} km/l</p><p><b>Comissão:</b> R$ ${(v.valor_comissao||0).toFixed(2)}</p><p class="${(v.lucro_liquido||0)>=0?'lucro-positivo':'lucro-negativo'}"><b>Lucro: R$ ${(v.lucro_liquido||0).toFixed(2)}</b></p></div>` : '';
                 if(v.status === 'concluida' && !isUserAdmin) { infoLucro = `<div style="margin-top:8px; padding:8px; background:#f5f5f5; border-radius:4px;"><p><b>Média:</b> ${(v.media_kml||0).toFixed(1)} km/l</p><p>🏁 Concluída</p></div>`; }
@@ -646,7 +643,6 @@
             
             resumoTemp = { data_retorno: document.getElementById('mod-data-retorno').value, km_final: kmFim, distancia: dist, litros: litros, media_kml: mediaKml, valor_comissao: valorComissao, total_custos: totalCustos, lucro_liquido: lucro, status: 'concluida', veiculo_id: v.veiculo_id };
 
-            // Se for motorista, mostra resumo básico sem dinheiro. Se for admin, mostra completo.
             if(isUserAdmin) {
                 document.getElementById('caixa-resumo').innerHTML = `
                     <div class="resumo-linha"><span>Distância Percorrida:</span> <b>${dist} km</b></div>
@@ -795,10 +791,9 @@
             let csvContent = "Data Saida;Veiculo;Motorista;Cliente;KM;Media (km/l);Comissao;Lucro Viagem\n";
             dadosFiltradosGlobais.forEach(row => { csvContent += `${row.data};${row.veiculo};${row.motorista};${row.cliente};${row.km};${row.media.toFixed(1).replace('.',',')};${row.comissao.toFixed(2).replace('.',',')};${row.lucro.toFixed(2).replace('.',',')}\n`; });
             const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "BI_JbTransportes_v1.5.csv";
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "BI_JbTransportes_v1.5.1.csv";
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         };
     </script>
 </body>
 </html>
-
