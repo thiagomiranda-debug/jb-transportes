@@ -6,13 +6,11 @@
     <title>Jb Transportes - Gestão de Frota</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        /* ================= ESTILOS VISUAIS ================= */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
         .tela { display: none; }
         .tela.ativa { display: block; }
         #app-layout { display: none; } 
-        
         .mobile-header { display: flex; align-items: center; background-color: #1a237e; color: white; padding: 15px; }
         .mobile-header button { background: none; border: none; color: white; margin-right: 15px; cursor: pointer; }
         .app-container { display: flex; min-height: calc(100vh - 54px); }
@@ -23,41 +21,30 @@
         .sidebar ul li a { display: flex; align-items: center; padding: 15px 20px; color: #555; text-decoration: none; border-bottom: 1px solid #eee; cursor: pointer; }
         .sidebar ul li a:hover { background-color: #e8eaf6; color: #1a237e; border-left: 4px solid #1a237e; }
         .main-content { flex: 1; padding: 20px; width: 100%; }
-        
         .form-card { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #444; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
         .flex-row { display: flex; gap: 15px; flex-wrap: wrap; }
         .flex-row .form-group { flex: 1; min-width: 150px; }
-        
-        .btn-submit { background: #1a237e; color: white; padding: 12px; border: none; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; font-size: 15px; margin-top: 10px; }
-        .btn-submit:hover { background: #283593; }
-        
+        .btn-submit { background: #1a237e; color: white; padding: 12px; border: none; border-radius: 4px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .dash-card { background: #fff; padding: 20px; border-radius: 8px; text-align: center; border-left: 4px solid #1a237e; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .item-list { display: grid; gap: 10px; margin-top: 15px;}
-        .card-item { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #4CAF50; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .card-item.inativo, .card-item.desligado { border-left-color: #9E9E9E; opacity: 0.7; }
-        .card-item.em-curso { border-left-color: #FFC107; }
-        .card-item h4 { margin-bottom: 5px; color: #1a237e; }
-        .card-item p { font-size: 13px; color: #555; margin-bottom: 3px; }
-        
-        #tela-login { height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #1a237e; flex-direction: column; }
+        .card-item { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #4CAF50; position: relative; }
+        .badge { background: #c62828; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; position: absolute; top: 10px; right: 10px; }
+        #tela-login { height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #1a237e; }
         .login-box { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
-        #login-erro { background: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-top: 15px; display: none; font-size: 14px; font-weight: bold; border: 1px solid #ef9a9a; text-align: center;}
-        
-        @media (min-width: 768px) { .mobile-header { display: none; } .sidebar { position: relative; left: 0; height: 100vh; } .btn-mobile-close { display: none; } }
     </style>
 </head>
 <body>
-
-    <div id="tela-login">
+    <div id="tela-login" class="tela ativa">
         <div class="login-box">
             <h2 style="color: #1a237e; margin-bottom: 20px;">Jb Transportes</h2>
             <form id="form-login">
-                <div class="form-group"><input type="email" id="login-email" required placeholder="E-mail de acesso"></div>
+                <div class="form-group"><input type="email" id="login-email" required placeholder="E-mail"></div>
                 <div class="form-group"><input type="password" id="login-senha" required placeholder="Senha"></div>
                 <button type="submit" class="btn-submit">Entrar no Sistema</button>
-                <div id="login-erro">Erro.</div>
             </form>
         </div>
     </div>
@@ -69,144 +56,59 @@
         </header>
         <div class="app-container">
             <nav class="sidebar" id="sidebar">
-                <div class="sidebar-header">
-                    <h2>Menu</h2>
-                    <button class="btn-mobile-close" onclick="document.getElementById('sidebar').classList.remove('open')" style="background:none; border:none; color:white; font-size:20px;">X</button>
-                </div>
+                <div class="sidebar-header"><h2>Menu</h2></div>
                 <ul>
-                    <li><a onclick="navegar('dashboard')"><span class="material-icons" style="margin-right:10px;">dashboard</span> Dashboard</a></li>
-                    <li><a onclick="navegar('veiculos')"><span class="material-icons" style="margin-right:10px;">directions_car</span> Veículos</a></li>
-                    <li><a onclick="navegar('motoristas')"><span class="material-icons" style="margin-right:10px;">badge</span> Motoristas</a></li>
-                    <li><a onclick="navegar('viagens')"><span class="material-icons" style="margin-right:10px;">route</span> Viagens</a></li>
-                    <li><a onclick="fazerLogout()"><span class="material-icons" style="margin-right:10px;">logout</span> Sair</a></li>
+                    <li><a onclick="navegar('dashboard')"><span class="material-icons">dashboard</span> Dashboard</a></li>
+                    <li><a onclick="navegar('veiculos')"><span class="material-icons">directions_car</span> Veículos</a></li>
+                    <li><a onclick="navegar('manutencao')"><span class="material-icons">build</span> Manutenções</a></li>
+                    <li><a onclick="navegar('motoristas')"><span class="material-icons">badge</span> Motoristas</a></li>
+                    <li><a onclick="navegar('viagens')"><span class="material-icons">route</span> Viagens</a></li>
+                    <li><a onclick="fazerLogout()"><span class="material-icons">logout</span> Sair</a></li>
                 </ul>
             </nav>
             <main class="main-content">
-                
                 <div id="tela-dashboard" class="tela">
-                    <h2>Visão Geral da Operação</h2><br>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <div class="form-card" style="flex: 1; text-align: center;"><h3>Veículos Ativos</h3><h2 id="dash-veiculos" style="color:#1a237e; margin-top:10px;">-</h2></div>
-                        <div class="form-card" style="flex: 1; text-align: center;"><h3>Motoristas</h3><h2 id="dash-motoristas" style="color:#1a237e; margin-top:10px;">-</h2></div>
-                        <div class="form-card" style="flex: 1; text-align: center;"><h3>KM no Mês</h3><h2 id="dash-km" style="color:#1a237e; margin-top:10px;">-</h2></div>
-                        <div class="form-card" style="flex: 1; text-align: center;"><h3>Custos no Mês</h3><h2 id="dash-custos" style="color:#c62828; margin-top:10px;">-</h2></div>
+                    <div class="dash-grid">
+                        <div class="dash-card"><h4>Veículos Ativos</h4><h2 id="dash-veiculos">-</h2></div>
+                        <div class="dash-card" style="border-left-color:#FFC107;"><h4>Viagens em Curso</h4><h2 id="dash-viagens-curso">-</h2></div>
+                        <div class="dash-card" style="border-left-color:#2e7d32;"><h4>Lucro Líquido Real</h4><h2 id="dash-lucro">R$ 0,00</h2></div>
                     </div>
-                </div>
-
-                <div id="tela-veiculos" class="tela">
-                    <h2>Cadastro de Veículos</h2><br>
-                    <div class="form-card">
-                        <form id="form-veiculo">
-                            <input type="hidden" id="v-id">
-                            
-                            <div class="flex-row">
-                                <div class="form-group"><label>Placa</label><input type="text" id="v-placa" required style="text-transform: uppercase;"></div>
-                                <div class="form-group" style="flex: 2;"><label>Marca / Modelo</label><input type="text" id="v-modelo" required></div>
-                            </div>
-
-                            <div class="flex-row">
-                                <div class="form-group"><label>Ano</label><input type="number" id="v-ano" required></div>
-                                <div class="form-group"><label>KM Atual</label><input type="number" id="v-km" required></div>
-                                <div class="form-group"><label>Tipo</label>
-                                    <select id="v-tipo">
-                                        <option value="Carro">Carro</option>
-                                        <option value="Moto">Moto</option>
-                                        <option value="Caminhão">Caminhão</option>
-                                        <option value="Van/Utilitário">Van / Utilitário</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="flex-row">
-                                <div class="form-group"><label>Combustível</label>
-                                    <select id="v-combustivel">
-                                        <option value="Gasolina">Gasolina</option><option value="Etanol">Etanol</option>
-                                        <option value="Diesel">Diesel</option><option value="Flex">Flex</option>
-                                        <option value="GNV">GNV</option><option value="Elétrico">Elétrico</option>
-                                    </select>
-                                </div>
-                                <div class="form-group"><label>Data de Aquisição</label><input type="date" id="v-data-aquisicao"></div>
-                                <div class="form-group"><label>Centro de Custo</label><input type="text" id="v-centro-custo" placeholder="Opcional"></div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Status</label>
-                                <select id="v-status"><option value="ativo">Ativo</option><option value="manutencao">Em Manutenção</option><option value="inativo">Inativo</option></select>
-                            </div>
-                            <button type="submit" class="btn-submit">Salvar Veículo</button>
-                        </form>
-                    </div>
-                    <h3>Lista de Veículos</h3>
-                    <div id="lista-veiculos" class="item-list"></div>
                 </div>
 
                 <div id="tela-motoristas" class="tela">
-                    <h2>Cadastro de Motoristas</h2><br>
+                    <h2>Motoristas e Alertas</h2><br>
                     <div class="form-card">
                         <form id="form-motorista">
                             <input type="hidden" id="m-id">
-                            
+                            <div class="form-group"><label>Nome</label><input type="text" id="m-nome" required></div>
                             <div class="flex-row">
-                                <div class="form-group" style="flex: 2;"><label>Nome Completo</label><input type="text" id="m-nome" required></div>
-                                <div class="form-group"><label>CPF</label><input type="text" id="m-cpf" required></div>
+                                <div class="form-group"><label>Validade Toxicológico</label><input type="date" id="m-tox-val" required></div>
+                                <div class="form-group"><label>Anexar CNH (PDF/Foto)</label><input type="file" id="m-cnh-arquivo"></div>
                             </div>
-
-                            <div class="flex-row">
-                                <div class="form-group"><label>Nº CNH</label><input type="text" id="m-cnh" required></div>
-                                <div class="form-group"><label>Categoria CNH</label><input type="text" id="m-cnh-cat" placeholder="Ex: AB, D, E" required style="text-transform: uppercase;"></div>
-                                <div class="form-group"><label>Validade CNH</label><input type="date" id="m-cnh-val" required></div>
-                            </div>
-
-                            <div class="flex-row">
-                                <div class="form-group"><label>Telefone</label><input type="text" id="m-telefone" placeholder="(00) 00000-0000"></div>
-                                <div class="form-group"><label>Data de Admissão</label><input type="date" id="m-admissao"></div>
-                                <div class="form-group"><label>Status</label><select id="m-status"><option value="ativo">Ativo</option><option value="afastado">Afastado</option><option value="desligado">Desligado</option></select></div>
-                            </div>
-                            
-                            <button type="submit" class="btn-submit">Salvar Motorista</button>
+                            <button type="submit" class="btn-submit" id="btn-salvar-mot">Salvar Motorista</button>
                         </form>
                     </div>
-                    <h3>Lista de Motoristas</h3>
                     <div id="lista-motoristas" class="item-list"></div>
                 </div>
 
-                <div id="tela-viagens" class="tela">
-                    <h2>Controle de Viagens</h2><br>
+                <div id="tela-manutencao" class="tela">
+                    <h2>Registrar Oficina</h2><br>
                     <div class="form-card">
-                        <form id="form-viagem">
-                            <input type="hidden" id="vi-id"><input type="hidden" id="vi-status" value="em_curso">
-                            
-                            <div class="flex-row">
-                                <div class="form-group"><label>Veículo</label><select id="vi-veiculo" required></select></div>
-                                <div class="form-group"><label>Motorista</label><select id="vi-motorista" required></select></div>
-                            </div>
-
-                            <div class="flex-row">
-                                <div class="form-group"><label>Data e Hora de Saída</label><input type="datetime-local" id="vi-data-saida" required></div>
-                                <div class="form-group"><label>KM Inicial</label><input type="number" id="vi-km-ini" required readonly style="background:#f0f0f0;"></div>
-                            </div>
-
-                            <div class="flex-row">
-                                <div class="form-group"><label>Destino</label><input type="text" id="vi-destino" required></div>
-                                <div class="form-group"><label>Finalidade da Viagem</label><input type="text" id="vi-finalidade" placeholder="Ex: Entrega de material" required></div>
-                            </div>
-                            
-                            <div id="area-retorno" style="display:none; background:#e8f5e9; padding:15px; border-radius:4px; margin-bottom:15px; border: 1px solid #c8e6c9;">
-                                <h4 style="color:#2e7d32; margin-bottom:15px;">🏁 Dados do Retorno</h4>
-                                
-                                <div class="flex-row">
-                                    <div class="form-group"><label>Data e Hora de Retorno</label><input type="datetime-local" id="vi-data-retorno"></div>
-                                    <div class="form-group"><label>KM Final</label><input type="number" id="vi-km-fim"></div>
-                                    <div class="form-group"><label>Valor Gasto (Combustível, etc.) R$</label><input type="number" step="0.01" id="vi-valor-gasto" placeholder="0.00"></div>
-                                </div>
-                                <div class="form-group"><label>Observações / Ocorrências</label><textarea id="vi-obs" rows="2" placeholder="Descreva problemas com o carro, multas, etc."></textarea></div>
-                            </div>
-
-                            <button type="submit" class="btn-submit" id="btn-salvar-viagem">Registrar Saída</button>
-                            <button type="button" onclick="cancelarViagem()" id="btn-cancelar-viagem" style="display:none; width:100%; margin-top:10px; padding:12px; cursor:pointer; background:#e0e0e0; border:none; font-weight:bold; border-radius:4px;">Cancelar Retorno</button>
+                        <form id="form-manutencao">
+                            <div class="form-group"><label>Veículo</label><select id="man-veiculo"></select></div>
+                            <div class="form-group"><label>Custo (R$)</label><input type="number" step="0.01" id="man-custo" required></div>
+                            <div class="form-group"><label>Descrição</label><textarea id="man-desc" required></textarea></div>
+                            <button type="submit" class="btn-submit">Registrar Manutenção</button>
                         </form>
                     </div>
-                    <h3>Histórico de Viagens</h3>
+                </div>
+                
+                <div id="tela-veiculos" class="tela">
+                    <h2>Veículos</h2>
+                    <div id="lista-veiculos" class="item-list"></div>
+                </div>
+                <div id="tela-viagens" class="tela">
+                    <h2>Viagens</h2>
                     <div id="lista-viagens" class="item-list"></div>
                 </div>
             </main>
@@ -215,10 +117,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, where, getDocs, getDoc, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-        // As suas chaves do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAtNpimtkjhbbD8AcN6inb4MSm1BSUhCsg",
             authDomain: "jb-transportes.firebaseapp.com",
@@ -231,319 +133,51 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
+        const storage = getStorage(app);
 
-        // ================= BANCOS DE MEMÓRIA (Nova Arquitetura) =================
-        let dbVeiculos = {};
-        let dbMotoristas = {};
-        let dbViagens = {};
-
-        // ================= NAVEGAÇÃO =================
-        window.navegar = (telaId) => {
+        window.navegar = (id) => {
             document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
-            document.getElementById('tela-' + telaId).classList.add('ativa');
-            document.getElementById('sidebar').classList.remove('open'); 
-            
-            if(telaId === 'dashboard') carregarDashboard();
-            if(telaId === 'viagens') {
-                carregarDropdownsViagem();
-                // Seta a data de saída como AGORA por padrão
-                const agora = new Date();
-                agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
-                document.getElementById('vi-data-saida').value = agora.toISOString().slice(0, 16);
-            }
+            document.getElementById('tela-' + id).classList.add('ativa');
+            if(id === 'manutencao') carregarOpcoesVeiculos();
         };
 
-        // ================= LOGIN E AUTENTICAÇÃO =================
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('tela-login').style.display = 'none';
                 document.getElementById('app-layout').style.display = 'block';
                 window.navegar('dashboard');
-            } else {
-                document.getElementById('app-layout').style.display = 'none';
-                document.getElementById('tela-login').style.display = 'flex';
             }
         });
 
         document.getElementById('form-login').addEventListener('submit', (e) => {
             e.preventDefault();
-            const btnSubmit = document.querySelector('#form-login .btn-submit');
-            const msgErro = document.getElementById('login-erro');
-            btnSubmit.innerText = 'Autenticando...';
-            msgErro.style.display = 'none';
+            signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-senha').value);
+        });
 
-            signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-senha').value)
-            .then(() => { btnSubmit.innerText = 'Entrar no Sistema'; })
-            .catch((error) => {
-                btnSubmit.innerText = 'Entrar no Sistema';
-                msgErro.style.display = 'block';
-                msgErro.innerHTML = "❌ E-mail ou senha incorretos.";
-            });
+        async function carregarOpcoesVeiculos() {
+            const select = document.getElementById('man-veiculo');
+            select.innerHTML = '';
+            const snap = await getDocs(collection(db, "veiculos"));
+            snap.forEach(d => select.innerHTML += `<option value="${d.id}">${d.data().placa}</option>`);
+        }
+
+        document.getElementById('form-motorista').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-salvar-mot');
+            btn.innerText = "Enviando...";
+            const dados = { nome: document.getElementById('m-nome').value, tox: document.getElementById('m-tox-val').value };
+            const file = document.getElementById('m-cnh-arquivo').files[0];
+            if(file) {
+                const sRef = ref(storage, 'cnh/' + Date.now() + file.name);
+                await uploadBytes(sRef, file);
+                dados.url = await getDownloadURL(sRef);
+            }
+            await addDoc(collection(db, "motoristas"), dados);
+            btn.innerText = "Salvar Motorista";
+            alert("Sucesso!");
         });
 
         window.fazerLogout = () => signOut(auth);
-
-        // ================= MÓDULO: VEÍCULOS =================
-        const formVeiculo = document.getElementById('form-veiculo');
-        formVeiculo.addEventListener('submit', async (e) => { 
-            e.preventDefault(); 
-            const id = document.getElementById('v-id').value; 
-            const dados = { 
-                placa: document.getElementById('v-placa').value.toUpperCase(), 
-                modelo: document.getElementById('v-modelo').value, 
-                ano: document.getElementById('v-ano').value, 
-                km_atual: parseFloat(document.getElementById('v-km').value), 
-                tipo: document.getElementById('v-tipo').value,
-                combustivel: document.getElementById('v-combustivel').value,
-                data_aquisicao: document.getElementById('v-data-aquisicao').value,
-                centro_custo: document.getElementById('v-centro-custo').value,
-                status: document.getElementById('v-status').value 
-            }; 
-            
-            if(id) await updateDoc(doc(db, "veiculos", id), dados); 
-            else await addDoc(collection(db, "veiculos"), dados); 
-            
-            formVeiculo.reset(); document.getElementById('v-id').value = ''; 
-        });
-
-        onSnapshot(collection(db, "veiculos"), (snap) => { 
-            const lista = document.getElementById('lista-veiculos'); lista.innerHTML = ''; 
-            snap.forEach(documento => { 
-                const v = documento.data(); 
-                dbVeiculos[documento.id] = v; // Guarda na memória
-                lista.innerHTML += `<div class="card-item ${v.status}" onclick="editarVeiculo('${documento.id}')" style="cursor:pointer;">
-                    <h4>${v.modelo} (${v.placa})</h4>
-                    <p><b>Tipo:</b> ${v.tipo || '-'} | <b>Combustível:</b> ${v.combustivel || '-'}</p>
-                    <p><b>KM Atual:</b> ${v.km_atual} | <b>Status:</b> ${v.status.toUpperCase()}</p>
-                </div>`; 
-            }); 
-        });
-
-        window.editarVeiculo = (id) => { 
-            const v = dbVeiculos[id];
-            document.getElementById('v-id').value = id; 
-            document.getElementById('v-placa').value = v.placa; 
-            document.getElementById('v-modelo').value = v.modelo; 
-            document.getElementById('v-ano').value = v.ano; 
-            document.getElementById('v-km').value = v.km_atual; 
-            document.getElementById('v-tipo').value = v.tipo || 'Carro'; 
-            document.getElementById('v-combustivel').value = v.combustivel || 'Gasolina'; 
-            document.getElementById('v-data-aquisicao').value = v.data_aquisicao || ''; 
-            document.getElementById('v-centro-custo').value = v.centro_custo || ''; 
-            document.getElementById('v-status').value = v.status; 
-            window.scrollTo(0,0);
-        };
-
-        // ================= MÓDULO: MOTORISTAS =================
-        const formMotorista = document.getElementById('form-motorista');
-        formMotorista.addEventListener('submit', async (e) => { 
-            e.preventDefault(); 
-            const id = document.getElementById('m-id').value; 
-            const dados = { 
-                nome: document.getElementById('m-nome').value, 
-                cpf: document.getElementById('m-cpf').value, 
-                cnh: document.getElementById('m-cnh').value, 
-                cnh_categoria: document.getElementById('m-cnh-cat').value.toUpperCase(), 
-                cnh_validade: document.getElementById('m-cnh-val').value, 
-                telefone: document.getElementById('m-telefone').value, 
-                data_admissao: document.getElementById('m-admissao').value, 
-                status: document.getElementById('m-status').value 
-            }; 
-            
-            if(id) await updateDoc(doc(db, "motoristas", id), dados); 
-            else await addDoc(collection(db, "motoristas"), dados); 
-            
-            formMotorista.reset(); document.getElementById('m-id').value = ''; 
-        });
-
-        onSnapshot(collection(db, "motoristas"), (snap) => { 
-            const lista = document.getElementById('lista-motoristas'); lista.innerHTML = ''; 
-            snap.forEach(documento => { 
-                const m = documento.data(); 
-                dbMotoristas[documento.id] = m;
-                lista.innerHTML += `<div class="card-item ${m.status}" onclick="editarMotorista('${documento.id}')" style="cursor:pointer;">
-                    <h4>${m.nome}</h4>
-                    <p><b>Telefone:</b> ${m.telefone || '-'} | <b>CNH:</b> ${m.cnh} (Cat. ${m.cnh_categoria || '-'})</p>
-                    <p><b>Status:</b> ${m.status.toUpperCase()}</p>
-                </div>`; 
-            }); 
-        });
-
-        window.editarMotorista = (id) => { 
-            const m = dbMotoristas[id];
-            document.getElementById('m-id').value = id; 
-            document.getElementById('m-nome').value = m.nome; 
-            document.getElementById('m-cpf').value = m.cpf || ''; 
-            document.getElementById('m-cnh').value = m.cnh; 
-            document.getElementById('m-cnh-cat').value = m.cnh_categoria || ''; 
-            document.getElementById('m-cnh-val').value = m.cnh_validade || ''; 
-            document.getElementById('m-telefone').value = m.telefone || ''; 
-            document.getElementById('m-admissao').value = m.data_admissao || ''; 
-            document.getElementById('m-status').value = m.status; 
-            window.scrollTo(0,0);
-        };
-
-        // ================= MÓDULO: VIAGENS =================
-        async function carregarDropdownsViagem() { 
-            const viVeiculo = document.getElementById('vi-veiculo'); 
-            const viMotorista = document.getElementById('vi-motorista'); 
-            viVeiculo.innerHTML = '<option value="">Selecione o Veículo</option>'; 
-            viMotorista.innerHTML = '<option value="">Selecione o Motorista</option>'; 
-            
-            // Só lista ativos
-            for(let id in dbVeiculos) { if(dbVeiculos[id].status === 'ativo') viVeiculo.innerHTML += `<option value="${id}">${dbVeiculos[id].placa} - ${dbVeiculos[id].modelo}</option>`; }
-            for(let id in dbMotoristas) { if(dbMotoristas[id].status === 'ativo') viMotorista.innerHTML += `<option value="${id}">${dbMotoristas[id].nome}</option>`; }
-        }
-
-        document.getElementById('vi-veiculo').addEventListener('change', (e) => { 
-            const vId = e.target.value; 
-            document.getElementById('vi-km-ini').value = vId ? dbVeiculos[vId].km_atual : ''; 
-        });
-
-        document.getElementById('form-viagem').addEventListener('submit', async (e) => { 
-            e.preventDefault(); 
-            const id = document.getElementById('vi-id').value; 
-            const status = document.getElementById('vi-status').value; 
-            const cbVeic = document.getElementById('vi-veiculo'); 
-            const cbMot = document.getElementById('vi-motorista'); 
-            
-            let dados = { 
-                veiculo_id: cbVeic.value, veiculo_nome: cbVeic.options[cbVeic.selectedIndex].text, 
-                motorista_id: cbMot.value, motorista_nome: cbMot.options[cbMot.selectedIndex].text, 
-                data_saida: document.getElementById('vi-data-saida').value,
-                km_inicial: parseFloat(document.getElementById('vi-km-ini').value), 
-                destino: document.getElementById('vi-destino').value, 
-                finalidade: document.getElementById('vi-finalidade').value,
-                status: status, 
-                data_atualizacao: new Date().toISOString() 
-            }; 
-
-            if (status === 'concluida') { 
-                const kmF = parseFloat(document.getElementById('vi-km-fim').value); 
-                if (kmF <= dados.km_inicial) { alert("ERRO: O KM Final deve ser MAIOR que o KM Inicial!"); return; } 
-                
-                dados.km_final = kmF; 
-                dados.distancia = kmF - dados.km_inicial; 
-                dados.data_retorno = document.getElementById('vi-data-retorno').value;
-                dados.valor_gasto = parseFloat(document.getElementById('vi-valor-gasto').value) || 0;
-                dados.observacoes = document.getElementById('vi-obs').value;
-                
-                // Calcula o custo por km
-                dados.custo_por_km = dados.valor_gasto > 0 ? (dados.valor_gasto / dados.distancia) : 0;
-
-                await updateDoc(doc(db, "veiculos", dados.veiculo_id), { km_atual: kmF }); // Atualiza odómetro do carro
-            } 
-            
-            if(id) await updateDoc(doc(db, "viagens", id), dados); 
-            else await addDoc(collection(db, "viagens"), dados); 
-            
-            window.cancelarViagem(); 
-        });
-
-        onSnapshot(collection(db, "viagens"), (snap) => { 
-            const lista = document.getElementById('lista-viagens'); lista.innerHTML = ''; 
-            snap.forEach(documento => { 
-                const v = documento.data(); 
-                dbViagens[documento.id] = v;
-                
-                // Formatação de Datas para visualização
-                let dataS = new Date(v.data_saida).toLocaleString('pt-BR');
-                let infoExtra = v.status === 'em_curso' ? 
-                    `<button onclick="prepararRetorno('${documento.id}')" style="margin-top:10px; background:#2e7d32; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">📍 Informar Retorno</button>` : 
-                    `<p style="margin-top:5px; color:#c62828;"><b>Total Rodado:</b> ${v.distancia} km | <b>Gasto:</b> R$ ${v.valor_gasto ? v.valor_gasto.toFixed(2) : '0,00'}</p>`; 
-                
-                lista.innerHTML += `<div class="card-item ${v.status.replace('_','-')}">
-                    <h4>Destino: ${v.destino}</h4>
-                    <p><b>Motivo:</b> ${v.finalidade || 'Não informado'}</p>
-                    <p><b>Veículo:</b> ${v.veiculo_nome} | <b>Motorista:</b> ${v.motorista_nome}</p>
-                    <p><b>Saída:</b> ${dataS} (KM: ${v.km_inicial})</p>
-                    ${infoExtra}
-                </div>`; 
-            }); 
-        });
-
-        window.prepararRetorno = (id) => { 
-            const v = dbViagens[id];
-            document.getElementById('vi-id').value = id; 
-            document.getElementById('vi-status').value = 'concluida'; 
-            
-            document.getElementById('vi-veiculo').value = v.veiculo_id; 
-            document.getElementById('vi-motorista').value = v.motorista_id; 
-            document.getElementById('vi-data-saida').value = v.data_saida; 
-            document.getElementById('vi-km-ini').value = v.km_inicial; 
-            document.getElementById('vi-destino').value = v.destino; 
-            document.getElementById('vi-finalidade').value = v.finalidade || ''; 
-            
-            // Bloqueia campos da saída
-            document.getElementById('vi-veiculo').disabled = true; 
-            document.getElementById('vi-motorista').disabled = true; 
-            document.getElementById('vi-data-saida').readOnly = true; 
-            document.getElementById('vi-destino').readOnly = true; 
-            document.getElementById('vi-finalidade').readOnly = true; 
-            
-            // Prepara área de retorno
-            document.getElementById('area-retorno').style.display = 'block'; 
-            document.getElementById('vi-km-fim').required = true; 
-            
-            const agora = new Date(); agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
-            document.getElementById('vi-data-retorno').value = agora.toISOString().slice(0, 16);
-            
-            document.getElementById('btn-salvar-viagem').innerText = "Finalizar Viagem e Salvar Custos"; 
-            document.getElementById('btn-cancelar-viagem').style.display = "block"; 
-            window.scrollTo(0,0); 
-        };
-
-        window.cancelarViagem = () => { 
-            document.getElementById('form-viagem').reset(); 
-            document.getElementById('vi-id').value = ''; 
-            document.getElementById('vi-status').value = 'em_curso'; 
-            
-            document.getElementById('vi-veiculo').disabled = false; 
-            document.getElementById('vi-motorista').disabled = false; 
-            document.getElementById('vi-data-saida').readOnly = false; 
-            document.getElementById('vi-destino').readOnly = false; 
-            document.getElementById('vi-finalidade').readOnly = false; 
-            
-            document.getElementById('area-retorno').style.display = 'none'; 
-            document.getElementById('vi-km-fim').required = false; 
-            
-            document.getElementById('btn-salvar-viagem').innerText = "Registrar Saída"; 
-            document.getElementById('btn-cancelar-viagem').style.display = "none"; 
-            
-            carregarDropdownsViagem(); // Restaura defaults
-        };
-
-        // ================= MÓDULO: DASHBOARD =================
-        async function carregarDashboard() {
-            try {
-                const snapV = await getCountFromServer(query(collection(db, "veiculos"), where("status", "==", "ativo")));
-                document.getElementById('dash-veiculos').innerText = snapV.data().count;
-                
-                const snapM = await getCountFromServer(query(collection(db, "motoristas"), where("status", "==", "ativo")));
-                document.getElementById('dash-motoristas').innerText = snapM.data().count;
-                
-                // Cálculos do mês (Puxa todas as concluídas e processa localmente para evitar filtros complexos nesta fase)
-                const snapViagens = await getDocs(query(collection(db, "viagens"), where("status", "==", "concluida")));
-                let totalKm = 0; 
-                let totalCustos = 0;
-                
-                const mesAtual = new Date().getMonth();
-                const anoAtual = new Date().getFullYear();
-
-                snapViagens.forEach(d => { 
-                    const viagem = d.data();
-                    const dataViagem = new Date(viagem.data_saida);
-                    // Filtra para somar apenas os KMs e Gastos do mês atual
-                    if(dataViagem.getMonth() === mesAtual && dataViagem.getFullYear() === anoAtual) {
-                        totalKm += (viagem.distancia || 0);
-                        totalCustos += (viagem.valor_gasto || 0);
-                    }
-                });
-                
-                document.getElementById('dash-km').innerText = totalKm + " km";
-                document.getElementById('dash-custos').innerText = "R$ " + totalCustos.toFixed(2).replace('.', ',');
-            } catch(e) { console.log("Erro ao carregar Dashboard:", e); } 
-        }
     </script>
 </body>
 </html>
