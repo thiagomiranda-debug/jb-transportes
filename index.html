@@ -422,7 +422,7 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 // Verifica se o e-mail do usuário logado está na lista VIP
-                isUserAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase());
+                isUserAdmin = ADMIN_EMAILS.some(e => e.trim().toLowerCase() === user.email.trim().toLowerCase());
                 
                 document.getElementById('tela-login').style.display = 'none'; 
                 document.getElementById('app-layout').style.display = 'block';
@@ -801,3 +801,4 @@
     </script>
 </body>
 </html>
+
