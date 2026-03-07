@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jb Transportes - ERP v3.0 (Acerto via WhatsApp/PDF)</title>
-<link rel="manifest" href="manifest.json">
+    <title>Jb Transportes - ERP v3.2</title>
+    
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a237e">
     <link rel="apple-touch-icon" href="icon-192.png">
+
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -23,7 +25,7 @@
         .sidebar ul { list-style: none; }
         .sidebar ul li a { display: flex; align-items: center; padding: 15px 20px; color: #555; text-decoration: none; border-bottom: 1px solid #eee; cursor: pointer; }
         .sidebar ul li a:hover { background-color: #e8eaf6; color: #1a237e; border-left: 4px solid #1a237e; }
-        .main-content { flex: 1; padding: 20px; width: 100%; overflow-x: auto; }
+        .main-content { flex: 1; padding: 20px; width: 100%; overflow-x: auto; position: relative; }
         
         .form-card { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .form-group { margin-bottom: 15px; position: relative; }
@@ -76,10 +78,13 @@
         body:not(.is-admin) .admin-only { display: none !important; }
         body:not(.is-motorista) .motorista-only { display: none !important; }
 
-        /* NOVA LÓGICA DE IMPRESSÃO UNIVERSAL - Limpa a tela e imprime apenas o conteúdo ativo */
+        /* PÍLULA DE CONEXÃO ONLINE/OFFLINE */
+        #status-conexao { position: fixed; top: 15px; right: 15px; z-index: 9999; display: flex; align-items: center; gap: 5px; background: #4CAF50; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: background 0.3s; }
+        #status-conexao.offline { background: #c62828; }
+
         @media print { 
             body { background: white; } 
-            .sidebar, .mobile-header, .btn-submit, form, .no-print, .badges-container, .btn-delete { display: none !important; } 
+            .sidebar, .mobile-header, .btn-submit, form, .no-print, .badges-container, .btn-delete, #status-conexao { display: none !important; } 
             .app-container, .main-content { margin: 0; padding: 0; width: 100%; } 
             .tela { display: none !important; } 
             .tela.ativa { display: block !important; } 
@@ -90,10 +95,14 @@
 </head>
 <body>
 
+    <div id="status-conexao">
+        <span class="material-icons" style="font-size: 16px;">wifi</span> Online
+    </div>
+
     <div id="tela-login">
         <div class="login-box">
             <h2 style="color: #1a237e; margin-bottom: 5px;">Jb Transportes</h2>
-            <p style="font-size: 12px; color: #666; margin-bottom: 20px;">v3.0 | Relatórios & Comunicação</p>
+            <p style="font-size: 12px; color: #666; margin-bottom: 20px;">v3.2 | Offline Aware & Dash. Motorista</p>
             <form id="form-login">
                 <div class="form-group"><input type="email" id="login-email" required placeholder="E-mail de acesso"></div>
                 <div class="form-group"><input type="password" id="login-senha" required placeholder="Senha"></div>
@@ -132,7 +141,14 @@
                 <div id="tela-dashboard" class="tela">
                     <div id="dash-motorista" class="motorista-only">
                         <h2>Olá, <span id="nome-motorista-dash">Motorista</span>!</h2>
-                        <p style="color:#666; font-size:14px; margin-bottom: 20px;">Bem-vindo à sua área. Aqui está o seu resumo deste mês.</p>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap:10px; background: #e3f2fd; padding: 10px; border-radius: 8px;">
+                            <p style="color:#1976d2; font-size:13px; margin: 0; flex: 1; min-width: 150px;">Acompanhe aqui o seu resumo.</p>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <label style="font-weight:bold; color:#1a237e; font-size: 14px;">Mês:</label>
+                                <input type="month" id="dm-mes-filtro" style="padding: 6px; border: 1px solid #1a237e; border-radius: 4px; font-weight: bold; color: #1a237e; cursor:pointer; font-size: 14px;">
+                            </div>
+                        </div>
                         
                         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
                             <div class="form-card" style="flex: 1; text-align: center; border-left: 4px solid #1a237e; padding: 15px;">
@@ -146,10 +162,10 @@
                         <h3 style="color:#1a237e; margin-bottom:10px;"><span class="material-icons" style="vertical-align:bottom;">account_balance_wallet</span> Meu Acerto Financeiro</h3>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
                             <div class="form-card" style="flex: 1; text-align: center; border-top: 4px solid #1a237e; padding:15px;">
-                                <h4>Comissões (Mês)</h4><h2 id="dm-comissao" style="color:#1a237e; margin-top:5px;">R$ 0,00</h2>
+                                <h4>Comissões (Créditos)</h4><h2 id="dm-comissao" style="color:#1a237e; margin-top:5px;">R$ 0,00</h2>
                             </div>
                             <div class="form-card" style="flex: 1; text-align: center; border-top: 4px solid #c62828; padding:15px;">
-                                <h4>Vales Recebidos</h4><h2 id="dm-vales" style="color:#c62828; margin-top:5px;">R$ 0,00</h2>
+                                <h4>Vales (Débitos)</h4><h2 id="dm-vales" style="color:#c62828; margin-top:5px;">R$ 0,00</h2>
                             </div>
                             <div class="form-card" style="flex: 1; text-align: center; border-top: 4px solid #2e7d32; padding:15px;">
                                 <h4>Saldo a Receber</h4><h2 id="dm-saldo" style="color:#2e7d32; margin-top:5px;">R$ 0,00</h2>
@@ -382,7 +398,6 @@
                     <div id="lista-viagens" class="item-list"></div>
                 </div>
 
-                <!-- MÓDULO DE ACERTO COM PDF E WHATSAPP -->
                 <div id="tela-acertos" class="tela">
                     <h2 class="no-print">Acerto de Contas Global</h2><br class="no-print">
                     <div class="form-card no-print">
@@ -409,9 +424,8 @@
                             </div>
                         </div>
 
-                        <!-- BOTÕES DE EXPORTAÇÃO (V3.0) -->
                         <div class="admin-only flex-row no-print" style="margin-bottom: 20px; gap: 10px; border-bottom: 2px dashed #ccc; padding-bottom: 20px;">
-                            <button type="button" class="btn-submit" onclick="enviarAcertoWhatsApp()" style="background:#25D366; color:white; flex: 1; margin-top:0;"><span class="material-icons">whatsapp</span> Enviar Fechamento (WhatsApp)</button>
+                            <button type="button" class="btn-submit" onclick="enviarAcertoWhatsApp()" style="background:#25D366; color:white; flex: 1; margin-top:0;"><span class="material-icons">whatsapp</span> Enviar para Motorista (WhatsApp)</button>
                             <button type="button" class="btn-submit" onclick="window.print()" style="background:#455a64; color:white; flex: 1; margin-top:0;"><span class="material-icons">picture_as_pdf</span> Imprimir / Salvar PDF</button>
                         </div>
 
@@ -515,7 +529,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE RETORNO COM TRAVA DE KM -->
     <div id="modal-retorno" class="modal-overlay">
         <div class="modal-box" id="modal-box-content">
             <button class="close-modal" onclick="fecharModalRetorno()">×</button>
@@ -575,6 +588,21 @@
         let meuMotoristaId = null; 
         
         let sysConfig = { whatsapp: "5587999490128", alertaDias: 30, alertaKmPneu: 1000, alertaKmOleo: 500, adminEmails: "thiagomiranda@outlook.com" };
+
+        // ================= MONITORAMENTO DE CONEXÃO (NOVO) =================
+        function atualizarStatusConexao() {
+            const statusDiv = document.getElementById('status-conexao');
+            if (navigator.onLine) {
+                statusDiv.classList.remove('offline');
+                statusDiv.innerHTML = '<span class="material-icons" style="font-size: 16px;">wifi</span> Online';
+            } else {
+                statusDiv.classList.add('offline');
+                statusDiv.innerHTML = '<span class="material-icons" style="font-size: 16px;">wifi_off</span> Offline';
+            }
+        }
+        window.addEventListener('online', atualizarStatusConexao);
+        window.addEventListener('offline', atualizarStatusConexao);
+        atualizarStatusConexao();
 
         async function logAuditoria(acao, detalhes) { try { await addDoc(collection(db, "auditoria"), { data: new Date().toISOString(), user: auth.currentUser?.email || 'desconhecido', acao: acao, detalhes: detalhes }); } catch(e){} }
 
@@ -730,7 +758,6 @@
             logAuditoria("Pagamento/Vale", `Lançado para ${dbMotoristas[mId].nome}`); document.getElementById('pg-valor').value = ''; document.getElementById('pg-desc').value = '';
         });
 
-        // ================= FUNÇÃO ATUALIZADA: ACERTO =================
         window.gerarRelatorioAcerto = () => {
             const mId = document.getElementById('acerto-motorista').value; const mesAno = document.getElementById('acerto-mes').value;
             if(!mId || !mesAno) return; document.getElementById('pg-mot-id').value = mId; 
@@ -759,7 +786,6 @@
             if(extrato.length === 0) lista.innerHTML = '<p style="color:#666;">Nenhuma movimentação registada para este mês.</p>';
             extrato.forEach(item => { const cor = item.tipo === 'viagem' ? '#1a237e' : '#f57c00'; const sinal = item.tipo === 'viagem' ? '+' : '-'; lista.innerHTML += `<div class="card-item" style="border-left-color: ${cor};"><div style="display:flex; justify-content:space-between; align-items:center;"><div><h4 style="color:${cor};">${item.desc}</h4><p>${item.dataStr}</p></div><div style="font-weight:bold; font-size:16px; color:${cor};">${sinal} R$ ${item.valor.toFixed(2).replace('.', ',')}</div></div></div>`; });
             
-            // Ajuste para impressão PDF
             const nomeMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
             const tituloPrint = document.getElementById('print-titulo-acerto');
             tituloPrint.innerText = `Acerto Financeiro - ${dbMotoristas[mId].nome} (${nomeMeses[mes]}/${ano})`;
@@ -768,7 +794,7 @@
             document.getElementById('area-resultado-acerto').style.display = 'block';
         };
 
-        // ================= NOVA FUNÇÃO: ENVIAR ACERTO WHATSAPP =================
+        // ================= FUNÇÃO ATUALIZADA: WHATSAPP DO MOTORISTA =================
         window.enviarAcertoWhatsApp = () => {
             const mId = document.getElementById('acerto-motorista').value;
             const mesAno = document.getElementById('acerto-mes').value;
@@ -791,10 +817,17 @@
             texto += `Vales/Adiantamentos (Débito): ${tPago}\n`;
             texto += `--------------------\n`;
             texto += `*SALDO FINAL:* ${tSaldo}\n\n`;
-            
             texto += `_Para ver o extrato detalhado dia a dia, acesse o seu painel de motorista no sistema._`;
 
-            const telefoneFormatado = (mot.telefone || "").replace(/\D/g, '');
+            // Lógica inteligente: Tenta usar o telefone do próprio motorista
+            let telefoneFormatado = (mot.telefone || "").replace(/\D/g, '');
+            
+            if(telefoneFormatado.length < 10) {
+                const prosseguir = confirm("⚠️ ATENÇÃO: O cadastro deste motorista não possui um número de WhatsApp válido (com DDD). \n\nDeseja abrir o WhatsApp mesmo assim e escolher o contato manualmente?");
+                if(!prosseguir) return;
+                telefoneFormatado = ""; // Deixa vazio para abrir a tela de escolha de contato
+            }
+
             const url = telefoneFormatado.length >= 10 
                 ? `https://wa.me/55${telefoneFormatado}?text=${window.encodeURIComponent(texto)}`
                 : `https://wa.me/?text=${window.encodeURIComponent(texto)}`;
@@ -802,7 +835,9 @@
             window.open(url, '_blank');
         };
 
+        // Escuta mudança de filtro (Dashboard Admin e Dashboard Motorista)
         document.getElementById('dash-mes-filtro').addEventListener('change', carregarDashboard);
+        document.getElementById('dm-mes-filtro').addEventListener('change', carregarDashboard);
 
         function carregarDashboard() {
             try {
@@ -852,14 +887,54 @@
                     if(graficoApp) { graficoApp.destroy(); }
                     const ctx = document.getElementById('graficoEvolucao').getContext('2d');
                     graficoApp = new Chart(ctx, { type: 'bar', data: { labels: labelsGrafico, datasets: [{ label: 'Receita Bruta', data: Object.values(histReceita), backgroundColor: '#1a237e', borderRadius: 4 }, { label: 'Custos Totais', data: Object.values(histCustos), backgroundColor: '#f57c00', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } } } });
+                
                 } else {
+                    // ================= ATUALIZADO: DASHBOARD DO MOTORISTA =================
                     if(!meuMotoristaId) return;
                     document.getElementById('nome-motorista-dash').innerText = dbMotoristas[meuMotoristaId].nome;
-                    let tComissao = 0; let tPago = 0; let tKm = 0; let qtdViagens = 0; const mesAtual = new Date().getMonth(); const anoAtual = new Date().getFullYear();
-                    Object.values(dbViagens).forEach(v => { if(v.motorista_id === meuMotoristaId && v.data_saida) { const d = new Date(v.data_saida); if(d.getMonth() === mesAtual && d.getFullYear() === anoAtual) { qtdViagens++; if(v.status === 'concluida') { tKm += (v.distancia||0); tComissao += (v.valor_comissao||0); } } } });
-                    Object.values(dbPagamentos).forEach(p => { if(p.motorista_id === meuMotoristaId && p.data_pagamento) { const d = new Date(p.data_pagamento+"T12:00:00"); if(d.getMonth() === mesAtual && d.getFullYear() === anoAtual) { tPago += (p.valor||0); } } });
-                    document.getElementById('dm-viagens').innerText = qtdViagens; document.getElementById('dm-km').innerText = tKm + " km"; document.getElementById('dm-comissao').innerText = "R$ " + tComissao.toLocaleString('pt-BR', {minimumFractionDigits: 2}); document.getElementById('dm-vales').innerText = "R$ " + tPago.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-                    let saldo = tComissao - tPago; let elSaldo = document.getElementById('dm-saldo'); elSaldo.innerText = "R$ " + saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2}); elSaldo.style.color = saldo < 0 ? '#c62828' : '#2e7d32';
+                    
+                    let inputMesMot = document.getElementById('dm-mes-filtro');
+                    if (!inputMesMot.value) { 
+                        const hoje = new Date(); 
+                        inputMesMot.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`; 
+                    }
+                    const [anoMotStr, mesMotStr] = inputMesMot.value.split('-');
+                    const anoAtual = parseInt(anoMotStr);
+                    const mesAtual = parseInt(mesMotStr) - 1; // 0-indexed para bater com getMonth()
+                    
+                    let tComissao = 0; let tPago = 0; let tKm = 0; let qtdViagens = 0; 
+                    
+                    Object.values(dbViagens).forEach(v => { 
+                        if(v.motorista_id === meuMotoristaId && v.data_saida) { 
+                            const d = new Date(v.data_saida); 
+                            if(d.getMonth() === mesAtual && d.getFullYear() === anoAtual) { 
+                                qtdViagens++; 
+                                if(v.status === 'concluida') { 
+                                    tKm += (v.distancia||0); 
+                                    tComissao += (v.valor_comissao||0); 
+                                } 
+                            } 
+                        } 
+                    });
+                    
+                    Object.values(dbPagamentos).forEach(p => { 
+                        if(p.motorista_id === meuMotoristaId && p.data_pagamento) { 
+                            const d = new Date(p.data_pagamento+"T12:00:00"); 
+                            if(d.getMonth() === mesAtual && d.getFullYear() === anoAtual) { 
+                                tPago += (p.valor||0); 
+                            } 
+                        } 
+                    });
+                    
+                    document.getElementById('dm-viagens').innerText = qtdViagens; 
+                    document.getElementById('dm-km').innerText = tKm + " km"; 
+                    document.getElementById('dm-comissao').innerText = "R$ " + tComissao.toLocaleString('pt-BR', {minimumFractionDigits: 2}); 
+                    document.getElementById('dm-vales').innerText = "R$ " + tPago.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                    
+                    let saldo = tComissao - tPago; 
+                    let elSaldo = document.getElementById('dm-saldo'); 
+                    elSaldo.innerText = "R$ " + saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2}); 
+                    elSaldo.style.color = saldo < 0 ? '#c62828' : '#2e7d32';
                 }
             } catch(e) { console.log("Dash erro:", e); } 
         }
@@ -1088,17 +1163,13 @@
             const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "BI_JbTransportes_Financeiro.csv";
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         };
-    </script>
-<script>
-        // Registra o Service Worker para habilitar a instalação do App (PWA)
+        
+        // Ativa o registro do PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('App PWA ativado com sucesso.', reg.scope))
-                    .catch(err => console.error('Erro ao ativar PWA', err));
+                navigator.serviceWorker.register('./sw.js').then(reg => console.log('PWA OK')).catch(err => console.error('PWA Erro', err));
             });
         }
     </script>
-</body>
 </body>
 </html>
