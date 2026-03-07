@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jb Transportes - ERP v3.2</title>
+    <title>Jb Transportes - ERP v3.6</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a237e">
@@ -41,17 +41,19 @@
         
         .item-list { display: grid; gap: 10px; margin-top: 15px;}
         .card-item { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #4CAF50; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative;}
-        .card-item.inativo, .card-item.desligado { border-left-color: #9E9E9E; opacity: 0.7; }
+        .card-item.inativo, .card-item.desligado, .card-item.sucata { border-left-color: #9E9E9E; opacity: 0.7; }
         .card-item.em-curso { border-left-color: #FFC107; }
         .card-item.manutencao { border-left-color: #e65100; }
         .card-item.custo-fixo { border-left-color: #607d8b; }
         .card-item.alerta { border-left-color: #c62828; }
+        .card-item.estoque { border-left-color: #1976d2; }
         .card-item h4 { margin-bottom: 5px; color: #1a237e; padding-right: 30px;}
         .card-item p { font-size: 13px; color: #555; margin-bottom: 3px; padding-right: 30px;}
         
         .badges-container { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; z-index: 2; }
         .badge { background: #c62828; color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.2);}
         .badge.warning { background: #f57c00; }
+        .badge.info { background: #1976d2; }
         
         .btn-delete { position: absolute; bottom: 15px; right: 15px; background: none; border: none; color: #c62828; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 5px; border-radius: 50%; transition: 0.2s;}
         .btn-delete:hover { background: #ffebee; }
@@ -78,7 +80,6 @@
         body:not(.is-admin) .admin-only { display: none !important; }
         body:not(.is-motorista) .motorista-only { display: none !important; }
 
-        /* PÍLULA DE CONEXÃO ONLINE/OFFLINE */
         #status-conexao { position: fixed; top: 15px; right: 15px; z-index: 9999; display: flex; align-items: center; gap: 5px; background: #4CAF50; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: background 0.3s; }
         #status-conexao.offline { background: #c62828; }
 
@@ -102,7 +103,7 @@
     <div id="tela-login">
         <div class="login-box">
             <h2 style="color: #1a237e; margin-bottom: 5px;">Jb Transportes</h2>
-            <p style="font-size: 12px; color: #666; margin-bottom: 20px;">v3.2 | Offline Aware & Dash. Motorista</p>
+            <p style="font-size: 12px; color: #666; margin-bottom: 20px;">v3.6 | Gestão Avançada de Pneus</p>
             <form id="form-login">
                 <div class="form-group"><input type="email" id="login-email" required placeholder="E-mail de acesso"></div>
                 <div class="form-group"><input type="password" id="login-senha" required placeholder="Senha"></div>
@@ -126,6 +127,7 @@
                 <ul>
                     <li><a onclick="navegar('dashboard')"><span class="material-icons" style="margin-right:10px;">dashboard</span> Meu Painel</a></li>
                     <li class="admin-only"><a onclick="navegar('veiculos')"><span class="material-icons" style="margin-right:10px;">directions_car</span> Veículos</a></li>
+                    <li class="admin-only"><a onclick="navegar('pneus')"><span class="material-icons" style="margin-right:10px;">tire_repair</span> Controle de Pneus</a></li>
                     <li class="admin-only"><a onclick="navegar('motoristas')"><span class="material-icons" style="margin-right:10px;">badge</span> Motoristas</a></li>
                     <li><a onclick="navegar('viagens')"><span class="material-icons" style="margin-right:10px;">route</span> Viagens</a></li>
                     <li class="admin-only"><a onclick="navegar('acertos')"><span class="material-icons" style="margin-right:10px;">account_balance_wallet</span> Acerto Global</a></li>
@@ -245,7 +247,6 @@
                             <div class="form-group" style="background: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #1976d2;">
                                 <label>E-mails Administradores (Separados por vírgula)</label>
                                 <textarea id="cfg-admins" rows="2" placeholder="exemplo@outlook.com, outro@gmail.com" required></textarea>
-                                <p style="font-size:11px; color:#1976d2; margin-top:5px; font-weight:bold;">Atenção: Estes usuários terão acesso total à diretoria e financeiro.</p>
                             </div>
 
                             <h3 style="color:#1a237e; margin-bottom: 15px; margin-top: 25px; display: flex; align-items: center; gap: 5px;"><span class="material-icons">forum</span> Comunicação WhatsApp</h3>
@@ -253,56 +254,82 @@
                                 <div class="form-group" style="flex: 1;">
                                     <label>Número Admin p/ Receber Alertas</label>
                                     <input type="text" id="cfg-whatsapp" placeholder="Ex: 5587999490128" required>
-                                    <p style="font-size:11px; color:#666; margin-top:4px;">Apenas números. Inclua o código do país (55) e o DDD.</p>
                                 </div>
                             </div>
 
                             <h3 style="color:#c62828; margin-bottom: 15px; margin-top: 20px; display: flex; align-items: center; gap: 5px;"><span class="material-icons">notifications_active</span> Parâmetros de Alerta (Preventivo)</h3>
                             <div class="flex-row">
-                                <div class="form-group">
-                                    <label>Avisar Documentos Vencendo em (Dias)</label>
-                                    <input type="number" id="cfg-dias-alerta" min="1" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Avisar Troca de Pneus faltando (KM)</label>
-                                    <input type="number" id="cfg-km-pneu" min="0" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Avisar Troca de Óleo faltando (KM)</label>
-                                    <input type="number" id="cfg-km-oleo" min="0" required>
-                                </div>
+                                <div class="form-group"><label>Avisar Doc. Vencendo em (Dias)</label><input type="number" id="cfg-dias-alerta" min="1" required></div>
+                                <div class="form-group"><label>Avisar Óleo faltando (KM)</label><input type="number" id="cfg-km-oleo" min="0" required></div>
+                                <div class="form-group"><label>Avisar Recap. Pneu (KM Alvo Máx)</label><input type="number" id="cfg-km-pneu" min="0" required title="Usado na nova Gestão de Pneus para avisar quando um pneu atingiu a cota de uso."></div>
                             </div>
                             
                             <button type="submit" class="btn-submit" id="btn-salvar-cfg" style="margin-top: 20px;"><span class="material-icons">save</span> Gravar Configurações Globais</button>
                         </form>
+
+                        <h3 style="color:#2e7d32; margin-bottom: 15px; margin-top: 35px; display: flex; align-items: center; gap: 5px;"><span class="material-icons">save_alt</span> Backup e Soberania de Dados</h3>
+                        <div class="form-group" style="background: #e8f5e9; padding: 15px; border-radius: 5px; border-left: 4px solid #2e7d32;">
+                            <p style="font-size: 13px; color: #333; margin-bottom: 15px;">Gere uma cópia offline completa de toda a sua base de dados (Veículos, Pneus, Motoristas, Viagens e Financeiro).</p>
+                            <button type="button" class="btn-submit" onclick="gerarBackupCompleto()" style="background: #2e7d32; width: auto; padding: 10px 20px;"><span class="material-icons">download</span> Baixar Backup Completo (JSON)</button>
+                        </div>
                     </div>
+                </div>
+
+                <!-- MÓDULO 3.6: GESTÃO DE PNEUS -->
+                <div id="tela-pneus" class="tela admin-only">
+                    <h2>Gestão Individual de Pneus (Controle de Carcaça)</h2><br>
+                    <div class="form-card">
+                        <form id="form-pneu">
+                            <input type="hidden" id="pn-id">
+                            <div class="flex-row">
+                                <div class="form-group"><label>Número de Fogo / Série</label><input type="text" id="pn-fogo" required style="text-transform: uppercase;" placeholder="Ex: JB-001"></div>
+                                <div class="form-group"><label>Marca / Modelo</label><input type="text" id="pn-marca" required placeholder="Ex: Michelin XTE2"></div>
+                                <div class="form-group"><label>Custo Aquisição/Recap. (R$)</label><input type="number" step="0.01" id="pn-custo" value="0.00"></div>
+                            </div>
+                            <div class="flex-row" style="background: #e3f2fd; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #1976d2; margin-top: 5px;">
+                                <div class="form-group">
+                                    <label>Local / Veículo Instalado</label>
+                                    <select id="pn-veiculo" required onchange="atualizarKmInstalacaoPneu(this.value)">
+                                        <option value="ESTOQUE">📦 Guardado no Estoque</option>
+                                        <!-- Preenchido via JS -->
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>KM Inicial de Instalação</label>
+                                    <input type="number" id="pn-km-instalacao" value="0" required title="Se for veículo, pega o KM atual automaticamente. Se for estoque, deixe 0.">
+                                </div>
+                                <div class="form-group">
+                                    <label>Status da Carcaça</label>
+                                    <select id="pn-status">
+                                        <option value="novo">Novo</option>
+                                        <option value="recapagem_1">1ª Recapagem</option>
+                                        <option value="recapagem_2">2ª Recapagem</option>
+                                        <option value="sucata">Descartado / Sucata</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-submit" style="background: #424242;"><span class="material-icons">tire_repair</span> Salvar Pneu no Inventário</button>
+                        </form>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="color:#1a237e;">Inventário Geral de Pneus</h3>
+                        <div style="font-size: 12px; background: #fff; padding: 5px 10px; border-radius: 4px; border: 1px solid #ccc;">
+                            Filtro Rápido: 
+                            <select id="filtro-lista-pneus" onchange="renderizarListaPneus()" style="border:none; background:transparent; font-weight:bold; color:#1a237e; cursor:pointer;">
+                                <option value="todos">Mostrar Todos</option>
+                                <option value="rodando">Apenas Rodando (Em Veículos)</option>
+                                <option value="ESTOQUE">Apenas Estoque</option>
+                                <option value="sucata">Apenas Sucata</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="lista-pneus" class="item-list"></div>
                 </div>
 
                 <div id="tela-custos" class="tela">
                     <h2>Despesas Fixas e Administrativas</h2><br>
-                    <div class="form-card">
-                        <form id="form-custo-fixo">
-                            <div class="flex-row">
-                                <div class="form-group" style="flex:2;"><label>Descrição da Despesa</label><input type="text" id="cf-desc" placeholder="Ex: Aluguel Pátio..." required></div>
-                                <div class="form-group"><label>Categoria</label>
-                                    <select id="cf-cat">
-                                        <option value="Administrativo">Administrativo / Escritório</option>
-                                        <option value="Salários/Pró-labore">Salários / Pró-labore</option>
-                                        <option value="Sistemas/Rastreador">Sistemas / Rastreador</option>
-                                        <option value="Seguros/Impostos">Seguros / Impostos Mensais</option>
-                                        <option value="Outros">Outros</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="flex-row">
-                                <div class="form-group"><label>Data de Pagamento</label><input type="date" id="cf-data" required></div>
-                                <div class="form-group"><label>Valor Pago (R$)</label><input type="number" step="0.01" id="cf-valor" required></div>
-                            </div>
-                            <button type="submit" class="btn-submit" style="background: #455a64;"><span class="material-icons">account_balance</span> Lançar Despesa Fixa</button>
-                        </form>
-                    </div>
-                    <h3 style="color:#1a237e; margin-bottom: 10px;">Histórico de Despesas Fixas</h3>
-                    <div id="lista-custos-fixos" class="item-list"></div>
+                    <div class="form-card"><form id="form-custo-fixo"><div class="flex-row"><div class="form-group" style="flex:2;"><label>Descrição da Despesa</label><input type="text" id="cf-desc" placeholder="Ex: Aluguel Pátio..." required></div><div class="form-group"><label>Categoria</label><select id="cf-cat"><option value="Administrativo">Administrativo / Escritório</option><option value="Salários/Pró-labore">Salários / Pró-labore</option><option value="Sistemas/Rastreador">Sistemas / Rastreador</option><option value="Seguros/Impostos">Seguros / Impostos Mensais</option><option value="Outros">Outros</option></select></div></div><div class="flex-row"><div class="form-group"><label>Data de Pagamento</label><input type="date" id="cf-data" required></div><div class="form-group"><label>Valor Pago (R$)</label><input type="number" step="0.01" id="cf-valor" required></div></div><button type="submit" class="btn-submit" style="background: #455a64;"><span class="material-icons">account_balance</span> Lançar Despesa Fixa</button></form></div><h3 style="color:#1a237e; margin-bottom: 10px;">Histórico de Despesas Fixas</h3><div id="lista-custos-fixos" class="item-list"></div>
                 </div>
 
                 <div id="tela-veiculos" class="tela">
@@ -310,26 +337,10 @@
                     <div class="form-card">
                         <form id="form-veiculo">
                             <input type="hidden" id="v-id">
-                            <div class="flex-row">
-                                <div class="form-group"><label>Placa</label><input type="text" id="v-placa" required style="text-transform: uppercase;"></div>
-                                <div class="form-group" style="flex: 2;"><label>Marca / Modelo</label><input type="text" id="v-modelo" required></div>
-                                <div class="form-group"><label>Ano</label><input type="number" id="v-ano" required></div>
-                            </div>
-                            <div class="flex-row" style="background: #f8f9fa; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #f57c00;">
-                                <div class="form-group"><label>KM Atual</label><input type="number" id="v-km" required></div>
-                                <div class="form-group"><label>Alvo: Trocar Pneus (KM)</label><input type="number" id="v-km-pneu"></div>
-                                <div class="form-group"><label>Alvo: Trocar Óleo (KM)</label><input type="number" id="v-km-oleo"></div>
-                            </div>
-                            <div class="flex-row" style="background: #e3f2fd; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #1976d2; margin-top: 10px;">
-                                <div class="form-group"><label>Validade ANTT</label><input type="date" id="v-antt"></div>
-                                <div class="form-group"><label>Val. Cronotacógrafo</label><input type="date" id="v-crono"></div>
-                                <div class="form-group"><label>Vencimento IPVA</label><input type="date" id="v-ipva"></div>
-                            </div>
-                            <div class="flex-row" style="margin-top: 15px;">
-                                <div class="form-group"><label>Tipo</label><select id="v-tipo"><option value="Carro">Carro</option><option value="Moto">Moto</option><option value="Caminhão">Caminhão</option><option value="Van/Utilitário">Van / Utilitário</option></select></div>
-                                <div class="form-group"><label>Combustível</label><select id="v-combustivel"><option value="Gasolina">Gasolina</option><option value="Etanol">Etanol</option><option value="Diesel">Diesel</option><option value="Flex">Flex</option></select></div>
-                                <div class="form-group"><label>Status</label><select id="v-status"><option value="ativo">Ativo</option><option value="manutencao">Em Oficina</option><option value="inativo">Inativo</option></select></div>
-                            </div>
+                            <div class="flex-row"><div class="form-group"><label>Placa</label><input type="text" id="v-placa" required style="text-transform: uppercase;"></div><div class="form-group" style="flex: 2;"><label>Marca / Modelo</label><input type="text" id="v-modelo" required></div><div class="form-group"><label>Ano</label><input type="number" id="v-ano" required></div></div>
+                            <div class="flex-row" style="background: #f8f9fa; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #f57c00;"><div class="form-group"><label>KM Atual</label><input type="number" id="v-km" required></div><div class="form-group"><label>Alvo: Trocar Óleo (KM)</label><input type="number" id="v-km-oleo"></div></div>
+                            <div class="flex-row" style="background: #e3f2fd; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #1976d2; margin-top: 10px;"><div class="form-group"><label>Validade ANTT</label><input type="date" id="v-antt"></div><div class="form-group"><label>Val. Cronotacógrafo</label><input type="date" id="v-crono"></div><div class="form-group"><label>Vencimento IPVA</label><input type="date" id="v-ipva"></div></div>
+                            <div class="flex-row" style="margin-top: 15px;"><div class="form-group"><label>Tipo</label><select id="v-tipo"><option value="Carro">Carro</option><option value="Moto">Moto</option><option value="Caminhão">Caminhão</option><option value="Van/Utilitário">Van / Utilitário</option></select></div><div class="form-group"><label>Combustível</label><select id="v-combustivel"><option value="Gasolina">Gasolina</option><option value="Etanol">Etanol</option><option value="Diesel">Diesel</option><option value="Flex">Flex</option></select></div><div class="form-group"><label>Status</label><select id="v-status"><option value="ativo">Ativo</option><option value="manutencao">Em Oficina</option><option value="inativo">Inativo</option></select></div></div>
                             <button type="submit" class="btn-submit"><span class="material-icons">save</span> Salvar Veículo</button>
                         </form>
                     </div>
@@ -338,192 +349,28 @@
 
                 <div id="tela-motoristas" class="tela">
                     <h2>Cadastro e Alertas de Motoristas</h2><br>
-                    <div class="form-card">
-                        <form id="form-motorista">
-                            <input type="hidden" id="m-id">
-                            <div class="flex-row">
-                                <div class="form-group" style="flex: 2;"><label>Nome Completo</label><input type="text" id="m-nome" required></div>
-                                <div class="form-group"><label>CPF</label><input type="text" id="m-cpf" required></div>
-                                <div class="form-group"><label>% de Comissão</label><input type="number" step="0.1" id="m-comissao" value="0" required></div>
-                            </div>
-                            <div class="flex-row" style="background: #e3f2fd; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #1976d2;">
-                                <div class="form-group"><label>Nº CNH</label><input type="text" id="m-cnh" required></div>
-                                <div class="form-group"><label>Validade CNH</label><input type="date" id="m-cnh-val" required></div>
-                                <div class="form-group"><label>Validade Toxicológico</label><input type="date" id="m-tox-val" required></div>
-                            </div>
-                            <div class="flex-row" style="background: #f1f8e9; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #33691e; margin-top: 15px;">
-                                <div class="form-group" style="flex:2;"><label>E-mail de Acesso (Login do Motorista)</label><input type="email" id="m-email" placeholder="Para o motorista acessar a sua área"></div>
-                                <div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="m-telefone" placeholder="Ex: 87999999999"></div>
-                                <div class="form-group"><label>Status</label><select id="m-status"><option value="ativo">Ativo</option><option value="afastado">Afastado</option><option value="desligado">Desligado</option></select></div>
-                            </div>
-                            <button type="submit" class="btn-submit" id="btn-salvar-mot" style="margin-top: 15px;"><span class="material-icons">save</span> Salvar Motorista</button>
-                        </form>
-                    </div>
-                    <div id="lista-motoristas" class="item-list"></div>
+                    <div class="form-card"><form id="form-motorista"><input type="hidden" id="m-id"><div class="flex-row"><div class="form-group" style="flex: 2;"><label>Nome Completo</label><input type="text" id="m-nome" required></div><div class="form-group"><label>CPF</label><input type="text" id="m-cpf" required></div><div class="form-group"><label>% de Comissão</label><input type="number" step="0.1" id="m-comissao" value="0" required></div></div><div class="flex-row" style="background: #e3f2fd; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #1976d2;"><div class="form-group"><label>Nº CNH</label><input type="text" id="m-cnh" required></div><div class="form-group"><label>Validade CNH</label><input type="date" id="m-cnh-val" required></div><div class="form-group"><label>Validade Toxicológico</label><input type="date" id="m-tox-val" required></div></div><div class="flex-row" style="background: #f1f8e9; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #33691e; margin-top: 15px;"><div class="form-group" style="flex:2;"><label>E-mail de Acesso (Login do Motorista)</label><input type="email" id="m-email" placeholder="Para o motorista acessar a sua área"></div><div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="m-telefone" placeholder="Ex: 87999999999"></div><div class="form-group"><label>Status</label><select id="m-status"><option value="ativo">Ativo</option><option value="afastado">Afastado</option><option value="desligado">Desligado</option></select></div></div><button type="submit" class="btn-submit" id="btn-salvar-mot" style="margin-top: 15px;"><span class="material-icons">save</span> Salvar Motorista</button></form></div><div id="lista-motoristas" class="item-list"></div>
                 </div>
 
                 <div id="tela-viagens" class="tela">
                     <h2>Registrar Nova Saída</h2><br>
-                    <div class="form-card">
-                        <form id="form-viagem">
-                            <input type="hidden" id="vi-id">
-                            <div class="flex-row">
-                                <div class="form-group"><label>Veículo</label><select id="vi-veiculo" required></select></div>
-                                <div class="form-group"><label>Motorista (Ativos)</label><select id="vi-motorista" required></select></div>
-                            </div>
-                            <div class="flex-row">
-                                <div class="form-group"><label>Data Saída</label><input type="datetime-local" id="vi-data-saida" required></div>
-                                <div class="form-group"><label>KM Inicial</label><input type="number" id="vi-km-ini" min="1" required readonly style="background:#f0f0f0; cursor:not-allowed;" title="Bloqueado: Puxado direto do veículo"></div>
-                            </div>
-                            <div class="flex-row">
-                                <div class="form-group"><label>Contratante / Cliente</label><input type="text" id="vi-contratante" required></div>
-                                <div class="form-group"><label>Valor do Frete (R$)</label><input type="number" step="0.01" id="vi-valor-frete" required></div>
-                            </div>
-                            <div class="flex-row">
-                                <div class="form-group"><label>Destino</label><input type="text" id="vi-destino" required></div>
-                                <div class="form-group"><label>Finalidade</label><input type="text" id="vi-finalidade" required></div>
-                            </div>
-                            <div class="flex-row" style="background: #e8f5e9; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #2e7d32; margin-top: 5px;">
-                                <div class="form-group" style="flex:2;">
-                                    <label>Adiantamento / Vale Viagem (R$)</label>
-                                    <input type="number" step="0.01" id="vi-adiantamento" value="0.00">
-                                </div>
-                                <div class="form-group" style="flex:3; align-content: center;">
-                                    <p style="font-size:12px; color:#2e7d32; margin-top: 5px;">*Se preenchido, será lançado automaticamente como débito no acerto.</p>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn-submit"><span class="material-icons">rocket_launch</span> Lançar Viagem no Sistema</button>
-                        </form>
-                    </div>
-                    <div id="lista-viagens" class="item-list"></div>
+                    <div class="form-card"><form id="form-viagem"><input type="hidden" id="vi-id"><div class="flex-row"><div class="form-group"><label>Veículo</label><select id="vi-veiculo" required></select></div><div class="form-group"><label>Motorista (Ativos)</label><select id="vi-motorista" required></select></div></div><div class="flex-row"><div class="form-group"><label>Data Saída</label><input type="datetime-local" id="vi-data-saida" required></div><div class="form-group"><label>KM Inicial</label><input type="number" id="vi-km-ini" min="1" required readonly style="background:#f0f0f0; cursor:not-allowed;" title="Bloqueado: Puxado direto do veículo"></div></div><div class="flex-row"><div class="form-group"><label>Contratante / Cliente</label><input type="text" id="vi-contratante" required></div><div class="form-group"><label>Valor do Frete (R$)</label><input type="number" step="0.01" id="vi-valor-frete" required></div></div><div class="flex-row"><div class="form-group"><label>Destino</label><input type="text" id="vi-destino" required></div><div class="form-group"><label>Finalidade</label><input type="text" id="vi-finalidade" required></div></div><div class="flex-row" style="background: #e8f5e9; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #2e7d32; margin-top: 5px;"><div class="form-group" style="flex:2;"><label>Adiantamento / Vale Viagem (R$)</label><input type="number" step="0.01" id="vi-adiantamento" value="0.00"></div><div class="form-group" style="flex:3; align-content: center;"><p style="font-size:12px; color:#2e7d32; margin-top: 5px;">*Se preenchido, será lançado automaticamente como débito no acerto.</p></div></div><button type="submit" class="btn-submit"><span class="material-icons">rocket_launch</span> Lançar Viagem no Sistema</button></form></div><div id="lista-viagens" class="item-list"></div>
                 </div>
 
                 <div id="tela-acertos" class="tela">
                     <h2 class="no-print">Acerto de Contas Global</h2><br class="no-print">
-                    <div class="form-card no-print">
-                        <div class="flex-row">
-                            <div class="form-group" style="flex: 2;"><label>Selecionar Motorista</label><select id="acerto-motorista"></select></div>
-                            <div class="form-group"><label>Mês / Ano</label><input type="month" id="acerto-mes" required></div>
-                        </div>
-                        <button type="button" class="btn-submit" onclick="gerarRelatorioAcerto()"><span class="material-icons">search</span> Buscar Extrato</button>
-                    </div>
-
-                    <div id="area-resultado-acerto" style="display:none;">
-                        
-                        <h2 style="display:none; color:#1a237e; margin-bottom: 20px;" class="print-only" id="print-titulo-acerto">Relatório de Fechamento</h2>
-
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-                            <div class="form-card" style="flex: 1; text-align: center; border-left: 4px solid #1a237e; padding:15px;">
-                                <h4>Comissão Acumulada</h4><h2 id="acerto-comissoes" style="color:#1a237e;">R$ 0,00</h2>
-                            </div>
-                            <div class="form-card" style="flex: 1; text-align: center; border-left: 4px solid #f57c00; padding:15px;">
-                                <h4>Já Pago / Vales</h4><h2 id="acerto-pagos" style="color:#f57c00;">R$ 0,00</h2>
-                            </div>
-                            <div class="form-card" style="flex: 1; text-align: center; border-left: 4px solid #2e7d32; padding:15px;">
-                                <h4>Saldo a Receber</h4><h2 id="acerto-saldo" style="color:#2e7d32;">R$ 0,00</h2>
-                            </div>
-                        </div>
-
-                        <div class="admin-only flex-row no-print" style="margin-bottom: 20px; gap: 10px; border-bottom: 2px dashed #ccc; padding-bottom: 20px;">
-                            <button type="button" class="btn-submit" onclick="enviarAcertoWhatsApp()" style="background:#25D366; color:white; flex: 1; margin-top:0;"><span class="material-icons">whatsapp</span> Enviar para Motorista (WhatsApp)</button>
-                            <button type="button" class="btn-submit" onclick="window.print()" style="background:#455a64; color:white; flex: 1; margin-top:0;"><span class="material-icons">picture_as_pdf</span> Imprimir / Salvar PDF</button>
-                        </div>
-
-                        <div class="admin-only form-card no-print" style="background:#e8f5e9; border:1px solid #c8e6c9;">
-                            <h4 style="color:#2e7d32; margin-bottom:10px;">💵 Lançar Adiantamento / Pagamento</h4>
-                            <form id="form-pagamento-mot">
-                                <input type="hidden" id="pg-mot-id">
-                                <div class="flex-row">
-                                    <div class="form-group"><label>Data</label><input type="date" id="pg-data" required></div>
-                                    <div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="pg-valor" required></div>
-                                    <div class="form-group" style="flex:2;"><label>Descrição</label><input type="text" id="pg-desc" placeholder="Ex: Vale semanal, Acerto final..." required></div>
-                                </div>
-                                <button type="submit" class="btn-submit" style="background:#2e7d32;"><span class="material-icons">payments</span> Gravar Pagamento no Extrato</button>
-                            </form>
-                        </div>
-
-                        <h3 style="color:#1a237e; margin-bottom:10px;">Extrato Detalhado da Competência</h3>
-                        <div id="lista-extrato-acerto" class="item-list"></div>
-                    </div>
+                    <div class="form-card no-print"><div class="flex-row"><div class="form-group" style="flex: 2;"><label>Selecionar Motorista</label><select id="acerto-motorista"></select></div><div class="form-group"><label>Mês / Ano</label><input type="month" id="acerto-mes" required></div></div><button type="button" class="btn-submit" onclick="gerarRelatorioAcerto()"><span class="material-icons">search</span> Buscar Extrato</button></div>
+                    <div id="area-resultado-acerto" style="display:none;"><h2 style="display:none; color:#1a237e; margin-bottom: 20px;" class="print-only" id="print-titulo-acerto">Relatório de Fechamento</h2><div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;"><div class="form-card" style="flex: 1; text-align: center; border-left: 4px solid #1a237e; padding:15px;"><h4>Comissão Acumulada</h4><h2 id="acerto-comissoes" style="color:#1a237e;">R$ 0,00</h2></div><div class="form-card" style="flex: 1; text-align: center; border-left: 4px solid #f57c00; padding:15px;"><h4>Já Pago / Vales</h4><h2 id="acerto-pagos" style="color:#f57c00;">R$ 0,00</h2></div><div class="form-card" style="flex: 1; text-align: center; border-left: 4px solid #2e7d32; padding:15px;"><h4>Saldo a Receber</h4><h2 id="acerto-saldo" style="color:#2e7d32;">R$ 0,00</h2></div></div><div class="admin-only flex-row no-print" style="margin-bottom: 20px; gap: 10px; border-bottom: 2px dashed #ccc; padding-bottom: 20px;"><button type="button" class="btn-submit" onclick="enviarAcertoWhatsApp()" style="background:#25D366; color:white; flex: 1; margin-top:0;"><span class="material-icons">whatsapp</span> Enviar para Motorista</button><button type="button" class="btn-submit" onclick="window.print()" style="background:#455a64; color:white; flex: 1; margin-top:0;"><span class="material-icons">picture_as_pdf</span> Imprimir / Salvar PDF</button></div><div class="admin-only form-card no-print" style="background:#e8f5e9; border:1px solid #c8e6c9;"><h4 style="color:#2e7d32; margin-bottom:10px;">💵 Lançar Adiantamento / Pagamento</h4><form id="form-pagamento-mot"><input type="hidden" id="pg-mot-id"><div class="flex-row"><div class="form-group"><label>Data</label><input type="date" id="pg-data" required></div><div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="pg-valor" required></div><div class="form-group" style="flex:2;"><label>Descrição</label><input type="text" id="pg-desc" placeholder="Ex: Vale semanal, Acerto final..." required></div></div><button type="submit" class="btn-submit" style="background:#2e7d32;"><span class="material-icons">payments</span> Gravar Pagamento no Extrato</button></form></div><h3 style="color:#1a237e; margin-bottom:10px;">Extrato Detalhado</h3><div id="lista-extrato-acerto" class="item-list"></div></div>
                 </div>
 
                 <div id="tela-manutencoes" class="tela">
                     <h2>Controle de Oficina e Manutenção</h2><br>
-                    <div class="form-card">
-                        <form id="form-manutencao">
-                            <div class="flex-row">
-                                <div class="form-group"><label>Veículo</label><select id="man-veiculo" required></select></div>
-                                <div class="form-group"><label>Data da Manutenção</label><input type="date" id="man-data" required></div>
-                            </div>
-                            <div class="flex-row">
-                                <div class="form-group"><label>Custo Total (R$)</label><input type="number" step="0.01" id="man-custo" required></div>
-                                <div class="form-group"><label>Tipo de Serviço</label>
-                                    <select id="man-tipo">
-                                        <option value="Revisão Preventiva">Revisão Preventiva</option>
-                                        <option value="Troca de Óleo e Filtros">Troca de Óleo e Filtros</option>
-                                        <option value="Troca de Pneus">Troca de Pneus</option>
-                                        <option value="Manutenção Corretiva">Manutenção Corretiva</option>
-                                        <option value="Documentos/Taxas">Documentos/Taxas</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="flex-row" id="man-alvo-container" style="display:none; background: #e3f2fd; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #1976d2; margin-bottom: 15px;">
-                                <div class="form-group" id="grp-man-km-oleo" style="display:none; margin-bottom: 0;">
-                                    <label>Novo Alvo: Próxima Troca de Óleo (KM)</label>
-                                    <input type="number" id="man-km-oleo" placeholder="Ex: 150000">
-                                </div>
-                                <div class="form-group" id="grp-man-km-pneu" style="display:none; margin-bottom: 0;">
-                                    <label>Novo Alvo: Próxima Troca de Pneus (KM)</label>
-                                    <input type="number" id="man-km-pneu" placeholder="Ex: 200000">
-                                </div>
-                                <div style="flex: 2; align-content: center;">
-                                    <p style="font-size:12px; color:#1976d2; margin-top: 5px;">*Se preenchido, o cadastro do veículo será atualizado e o alerta do painel sumirá automaticamente.</p>
-                                </div>
-                            </div>
-
-                            <div class="form-group"><label>Descrição Completa</label><textarea id="man-desc" rows="2" required></textarea></div>
-                            <button type="submit" class="btn-submit" style="background: #e65100;"><span class="material-icons">build</span> Registrar Despesa de Oficina</button>
-                        </form>
-                    </div>
-                    <div id="lista-manutencoes" class="item-list"></div>
+                    <div class="form-card"><form id="form-manutencao"><div class="flex-row"><div class="form-group"><label>Veículo</label><select id="man-veiculo" required></select></div><div class="form-group"><label>Data da Manutenção</label><input type="date" id="man-data" required></div></div><div class="flex-row"><div class="form-group"><label>Custo Total (R$)</label><input type="number" step="0.01" id="man-custo" required></div><div class="form-group"><label>Tipo de Serviço</label><select id="man-tipo"><option value="Revisão Preventiva">Revisão Preventiva</option><option value="Troca de Óleo e Filtros">Troca de Óleo e Filtros</option><option value="Serviço de Pneus">Serviço de Pneus / Borracharia</option><option value="Manutenção Corretiva">Manutenção Corretiva</option><option value="Documentos/Taxas">Documentos/Taxas</option></select></div></div><div class="flex-row" id="man-alvo-container" style="display:none; background: #e3f2fd; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #1976d2; margin-bottom: 15px;"><div class="form-group" id="grp-man-km-oleo" style="display:none; margin-bottom: 0;"><label>Novo Alvo: Próxima Troca de Óleo (KM)</label><input type="number" id="man-km-oleo" placeholder="Ex: 150000"></div><div style="flex: 2; align-content: center;"><p style="font-size:12px; color:#1976d2; margin-top: 5px;">*Se preenchido, o cadastro do veículo será atualizado.</p></div></div><div class="form-group"><label>Descrição Completa</label><textarea id="man-desc" rows="2" required></textarea></div><button type="submit" class="btn-submit" style="background: #e65100;"><span class="material-icons">build</span> Registrar Despesa de Oficina</button></form></div><div id="lista-manutencoes" class="item-list"></div>
                 </div>
 
                 <div id="tela-relatorios" class="tela">
                     <h2 class="no-print">Relatórios e Inteligência de Frota (BI)</h2><br>
-                    <div class="form-card no-print">
-                        <form id="form-filtro-relatorio">
-                            <div class="flex-row">
-                                <div class="form-group"><label>Data Inicial</label><input type="date" id="filtro-data-ini" required></div>
-                                <div class="form-group"><label>Data Final</label><input type="date" id="filtro-data-fim" required></div>
-                                <div class="form-group"><label>Status</label><select id="filtro-status"><option value="todos">Todos</option><option value="concluida">Apenas Concluídas</option><option value="em_curso">Apenas Em Curso</option></select></div>
-                            </div>
-                            <div class="flex-row">
-                                <div class="form-group"><label>Filtrar Veículo</label><select id="filtro-veiculo"><option value="todos">Todos os Veículos</option></select></div>
-                                <div class="form-group"><label>Filtrar Motorista</label><select id="filtro-motorista"><option value="todos">Todos os Motoristas</option></select></div>
-                                <div class="form-group"><label>Destino / Contratante</label><input type="text" id="filtro-texto" placeholder="Palavra-chave..."></div>
-                            </div>
-                            <button type="submit" class="btn-submit"><span class="material-icons">search</span> Gerar Relatório de Viagens</button>
-                        </form>
-                    </div>
-                    <div id="area-resultado-relatorio" style="display:none;">
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-                            <div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #1a237e;"><h4>Total Rodado</h4><h2 id="rel-total-km" style="color:#1a237e;">0 km</h2></div>
-                            <div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #c62828;"><h4>Custos Viagem</h4><h2 id="rel-total-custo" style="color:#c62828;">R$ 0,00</h2></div>
-                            <div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #1a237e;"><h4>Receita Frete</h4><h2 id="rel-total-frete" style="color:#1a237e;">R$ 0,00</h2></div>
-                            <div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #2e7d32;"><h4>Lucro das Viagens</h4><h2 id="rel-total-lucro" style="color:#2e7d32;">R$ 0,00</h2><p style="font-size:10px;">(Sem contar oficina/custos fixos)</p></div>
-                        </div>
-                        <div style="overflow-x: auto;">
-                            <table class="data-table" id="tabela-relatorio">
-                                <thead><tr><th>Data</th><th>Veículo</th><th>Motorista</th><th>Cliente / Destino</th><th>KM</th><th>Média (km/l)</th><th>Comissão Mot.</th><th>Lucro</th></tr></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                        <div class="flex-row no-print" style="margin-top: 20px;">
-                            <button type="button" class="btn-submit btn-print" onclick="window.print()"><span class="material-icons">picture_as_pdf</span> Salvar PDF</button>
-                            <button type="button" class="btn-submit btn-export" onclick="exportarExcel()"><span class="material-icons">table_view</span> Exportar Excel (CSV)</button>
-                        </div>
-                    </div>
+                    <div class="form-card no-print"><form id="form-filtro-relatorio"><div class="flex-row"><div class="form-group"><label>Data Inicial</label><input type="date" id="filtro-data-ini" required></div><div class="form-group"><label>Data Final</label><input type="date" id="filtro-data-fim" required></div><div class="form-group"><label>Status</label><select id="filtro-status"><option value="todos">Todos</option><option value="concluida">Apenas Concluídas</option><option value="em_curso">Apenas Em Curso</option></select></div></div><div class="flex-row"><div class="form-group"><label>Filtrar Veículo</label><select id="filtro-veiculo"><option value="todos">Todos os Veículos</option></select></div><div class="form-group"><label>Filtrar Motorista</label><select id="filtro-motorista"><option value="todos">Todos os Motoristas</option></select></div><div class="form-group"><label>Destino / Contratante</label><input type="text" id="filtro-texto" placeholder="Palavra-chave..."></div></div><button type="submit" class="btn-submit"><span class="material-icons">search</span> Gerar Relatório de Viagens</button></form></div><div id="area-resultado-relatorio" style="display:none;"><div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;"><div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #1a237e;"><h4>Total Rodado</h4><h2 id="rel-total-km" style="color:#1a237e;">0 km</h2></div><div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #c62828;"><h4>Custos Viagem</h4><h2 id="rel-total-custo" style="color:#c62828;">R$ 0,00</h2></div><div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #1a237e;"><h4>Receita Frete</h4><h2 id="rel-total-frete" style="color:#1a237e;">R$ 0,00</h2></div><div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #2e7d32;"><h4>Lucro das Viagens</h4><h2 id="rel-total-lucro" style="color:#2e7d32;">R$ 0,00</h2><p style="font-size:10px;">(Sem contar oficina/custos fixos)</p></div></div><div style="overflow-x: auto;"><table class="data-table" id="tabela-relatorio"><thead><tr><th>Data</th><th>Veículo</th><th>Motorista</th><th>Cliente / Destino</th><th>KM</th><th>Média (km/l)</th><th>Comissão Mot.</th><th>Lucro</th></tr></thead><tbody></tbody></table></div><div class="flex-row no-print" style="margin-top: 20px;"><button type="button" class="btn-submit btn-print" onclick="window.print()"><span class="material-icons">picture_as_pdf</span> Salvar PDF</button><button type="button" class="btn-submit btn-export" onclick="exportarExcel()"><span class="material-icons">table_view</span> Exportar Excel (CSV)</button></div></div>
                 </div>
             </main>
         </div>
@@ -535,36 +382,22 @@
             <h2 id="modal-titulo" style="color: #1a237e; margin-bottom: 15px;">🏁 Finalizar Viagem</h2>
             <div id="modal-step-1">
                 <input type="hidden" id="mod-viagem-id">
-                <div class="flex-row">
-                    <div class="form-group"><label>Data Retorno</label><input type="datetime-local" id="mod-data-retorno" required></div>
-                    <div class="form-group">
-                        <label>KM Final (Painel)</label>
-                        <input type="number" id="mod-km-fim" required placeholder="Digite o KM atual">
-                        <span id="aviso-km-invalido" style="color: #c62828; font-size: 11.5px; font-weight: bold; display: none; margin-top: 4px;">⚠️ Erro: KM Final deve ser MAIOR que o KM de saída (<span id="span-km-saida"></span>).</span>
-                    </div>
-                </div>
-                
+                <div class="flex-row"><div class="form-group"><label>Data Retorno</label><input type="datetime-local" id="mod-data-retorno" required></div><div class="form-group"><label>KM Final (Painel)</label><input type="number" id="mod-km-fim" required placeholder="Digite o KM atual"><span id="aviso-km-invalido" style="color: #c62828; font-size: 11.5px; font-weight: bold; display: none; margin-top: 4px;">⚠️ Erro: KM Final deve ser MAIOR que o KM de saída (<span id="span-km-saida"></span>).</span></div></div>
                 <h4 style="margin: 10px 0; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Abastecimento & Despesas</h4>
-                <div class="flex-row">
-                    <div class="form-group"><label>Litros (L)</label><input type="number" step="0.01" id="mod-litros" value="0.00"></div>
-                    <div class="form-group"><label>Combustível (R$)</label><input type="number" step="0.01" id="mod-custo-combustivel" value="0.00"></div>
-                </div>
+                <div class="flex-row"><div class="form-group"><label>Litros (L)</label><input type="number" step="0.01" id="mod-litros" value="0.00"></div><div class="form-group"><label>Combustível (R$)</label><input type="number" step="0.01" id="mod-custo-combustivel" value="0.00"></div></div>
                 <div class="form-group"><label>Pedágios / Extras (R$)</label><input type="number" step="0.01" id="mod-custo-pedagio" value="0.00"></div>
                 <button type="button" class="btn-submit" id="btn-calcular-resumo" onclick="gerarResumoViagem()" style="background: #2e7d32;"><span class="material-icons">calculate</span> Calcular Resumo</button>
             </div>
             <div id="modal-step-2" style="display: none;">
                 <div class="resumo-box" id="caixa-resumo"></div>
-                <div style="display: flex; gap: 10px;">
-                    <button type="button" class="btn-submit" onclick="voltarParaGastos()" style="background: #757575; flex: 1;">Voltar</button>
-                    <button type="button" class="btn-submit" id="btn-confirmar-final" onclick="confirmarSalvarViagem()" style="flex: 2;">Confirmar e Salvar</button>
-                </div>
+                <div style="display: flex; gap: 10px;"><button type="button" class="btn-submit" onclick="voltarParaGastos()" style="background: #757575; flex: 1;">Voltar</button><button type="button" class="btn-submit" id="btn-confirmar-final" onclick="confirmarSalvarViagem()" style="flex: 2;">Confirmar e Salvar</button></div>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -576,600 +409,273 @@
             appId: "1:118086162468:web:6d29d0ebcd6fd3b4a2a0b1"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        const app = initializeApp(firebaseConfig); const db = getFirestore(app); const auth = getAuth(app);
+        enableIndexedDbPersistence(db).catch((err) => { console.warn("Persistência offline aviso:", err.code); });
 
-        let dbVeiculos = {}; let dbMotoristas = {}; let dbViagens = {}; let dbManutencoes = {}; let dbCustosFixos = {}; let dbPagamentos = {};
-        let dadosFiltradosGlobais = []; 
-        let graficoApp = null;
-        
-        let isUserAdmin = false;
-        let meuMotoristaId = null; 
-        
-        let sysConfig = { whatsapp: "5587999490128", alertaDias: 30, alertaKmPneu: 1000, alertaKmOleo: 500, adminEmails: "thiagomiranda@outlook.com" };
+        let dbVeiculos = {}; let dbMotoristas = {}; let dbViagens = {}; let dbManutencoes = {}; let dbCustosFixos = {}; let dbPagamentos = {}; 
+        let dbPneus = {}; // NOVO DB PARA PNEUS
+        let dadosFiltradosGlobais = []; let graficoApp = null; let isUserAdmin = false; let meuMotoristaId = null; 
+        let sysConfig = { whatsapp: "5587999490128", alertaDias: 30, alertaKmPneu: 60000, alertaKmOleo: 500, adminEmails: "thiagomiranda@outlook.com" };
 
-        // ================= MONITORAMENTO DE CONEXÃO (NOVO) =================
-        function atualizarStatusConexao() {
-            const statusDiv = document.getElementById('status-conexao');
-            if (navigator.onLine) {
-                statusDiv.classList.remove('offline');
-                statusDiv.innerHTML = '<span class="material-icons" style="font-size: 16px;">wifi</span> Online';
-            } else {
-                statusDiv.classList.add('offline');
-                statusDiv.innerHTML = '<span class="material-icons" style="font-size: 16px;">wifi_off</span> Offline';
-            }
-        }
-        window.addEventListener('online', atualizarStatusConexao);
-        window.addEventListener('offline', atualizarStatusConexao);
-        atualizarStatusConexao();
+        function atualizarStatusConexao() { const statusDiv = document.getElementById('status-conexao'); if (navigator.onLine) { statusDiv.classList.remove('offline'); statusDiv.innerHTML = '<span class="material-icons" style="font-size: 16px;">wifi</span> Online'; } else { statusDiv.classList.add('offline'); statusDiv.innerHTML = '<span class="material-icons" style="font-size: 16px;">wifi_off</span> Offline'; } }
+        window.addEventListener('online', atualizarStatusConexao); window.addEventListener('offline', atualizarStatusConexao); atualizarStatusConexao();
 
-        async function logAuditoria(acao, detalhes) { try { await addDoc(collection(db, "auditoria"), { data: new Date().toISOString(), user: auth.currentUser?.email || 'desconhecido', acao: acao, detalhes: detalhes }); } catch(e){} }
+        async function logAuditoria(acao, detalhes) { try { const p = addDoc(collection(db, "auditoria"), { data: new Date().toISOString(), user: auth.currentUser?.email || 'desconhecido', acao: acao, detalhes: detalhes }); if(navigator.onLine) await p; } catch(e){} }
 
         function avaliarPermissoes() {
-            const user = auth.currentUser;
-            if (!user) return;
-
-            let adminList = ["thiagomiranda@outlook.com"]; 
-            if (sysConfig.adminEmails) {
-                const extraAdmins = sysConfig.adminEmails.split(',').map(e => e.trim().toLowerCase());
-                adminList = [...new Set([...adminList, ...extraAdmins])];
-            }
-
+            const user = auth.currentUser; if (!user) return;
+            let adminList = ["thiagomiranda@outlook.com"]; if (sysConfig.adminEmails) { const extraAdmins = sysConfig.adminEmails.split(',').map(e => e.trim().toLowerCase()); adminList = [...new Set([...adminList, ...extraAdmins])]; }
             isUserAdmin = adminList.includes(user.email.trim().toLowerCase());
-
-            if (isUserAdmin) {
-                document.body.classList.add('is-admin');
-                document.body.classList.remove('is-motorista');
-            } else {
-                document.body.classList.remove('is-admin');
-                document.body.classList.add('is-motorista');
-            }
+            if (isUserAdmin) { document.body.classList.add('is-admin'); document.body.classList.remove('is-motorista'); } else { document.body.classList.remove('is-admin'); document.body.classList.add('is-motorista'); }
         }
 
         onSnapshot(doc(db, "configuracoes", "sistema"), (docSnap) => {
             if (docSnap.exists()) { sysConfig = docSnap.data(); }
-            
-            document.getElementById('cfg-whatsapp').value = sysConfig.whatsapp || "5587999490128";
-            document.getElementById('cfg-dias-alerta').value = sysConfig.alertaDias || 30;
-            document.getElementById('cfg-km-pneu').value = sysConfig.alertaKmPneu || 1000;
-            document.getElementById('cfg-km-oleo').value = sysConfig.alertaKmOleo || 500;
-            document.getElementById('cfg-admins').value = sysConfig.adminEmails || "thiagomiranda@outlook.com";
-            
-            avaliarPermissoes(); 
-            atualizarPainelGlobalDeAlertas();
-            if(document.getElementById('tela-dashboard').classList.contains('ativa')) carregarDashboard();
+            document.getElementById('cfg-whatsapp').value = sysConfig.whatsapp || "5587999490128"; document.getElementById('cfg-dias-alerta').value = sysConfig.alertaDias || 30; document.getElementById('cfg-km-pneu').value = sysConfig.alertaKmPneu || 60000; document.getElementById('cfg-km-oleo').value = sysConfig.alertaKmOleo || 500; document.getElementById('cfg-admins').value = sysConfig.adminEmails || "thiagomiranda@outlook.com";
+            avaliarPermissoes(); atualizarPainelGlobalDeAlertas(); if(document.getElementById('tela-dashboard').classList.contains('ativa')) carregarDashboard();
         });
 
         document.getElementById('form-configuracoes').addEventListener('submit', async (e) => {
+            e.preventDefault(); if(!isUserAdmin) return; const btn = document.getElementById('btn-salvar-cfg'); btn.innerText = "Gravando..."; btn.disabled = true;
+            const newConfig = { whatsapp: document.getElementById('cfg-whatsapp').value.replace(/\D/g,''), alertaDias: parseInt(document.getElementById('cfg-dias-alerta').value) || 30, alertaKmPneu: parseInt(document.getElementById('cfg-km-pneu').value) || 60000, alertaKmOleo: parseInt(document.getElementById('cfg-km-oleo').value) || 500, adminEmails: document.getElementById('cfg-admins').value };
+            try { const p = setDoc(doc(db, "configuracoes", "sistema"), newConfig); if(navigator.onLine) await p; logAuditoria("Configurações", "Atualizadas."); alert("Salvo no sistema!"); } catch(error) { alert("Erro ao gravar."); } finally { btn.innerHTML = "<span class='material-icons'>save</span> Gravar Configurações Globais"; btn.disabled = false; }
+        });
+
+        window.gerarBackupCompleto = () => {
+            if(!isUserAdmin) return;
+            const backupData = { data_geracao: new Date().toISOString(), resumo: { total_veiculos: Object.keys(dbVeiculos).length, total_motoristas: Object.keys(dbMotoristas).length, total_viagens: Object.keys(dbViagens).length, total_pneus: Object.keys(dbPneus).length }, veiculos: dbVeiculos, motoristas: dbMotoristas, viagens: dbViagens, pneus: dbPneus, manutencoes: dbManutencoes, custos_fixos: dbCustosFixos, pagamentos: dbPagamentos };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2)); const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", `JbTransportes_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove();
+        };
+
+        // ======================================================================
+        // MÓDULO 3.6: GESTÃO DE PNEUS (LÓGICA)
+        // ======================================================================
+        
+        // Carrega dropdown de veículos na aba Pneus
+        function carregarDropdownVeiculosPneu() {
+            const select = document.getElementById('pn-veiculo');
+            select.innerHTML = '<option value="ESTOQUE">📦 Guardado no Estoque</option>';
+            for(let id in dbVeiculos) {
+                if(dbVeiculos[id].status === 'ativo') {
+                    select.innerHTML += `<option value="${id}">🚚 ${dbVeiculos[id].placa} - ${dbVeiculos[id].modelo}</option>`;
+                }
+            }
+        }
+
+        // Auto-preenche o KM de Instalação se escolher um veículo
+        window.atualizarKmInstalacaoPneu = (veiculoId) => {
+            const inputKm = document.getElementById('pn-km-instalacao');
+            if(veiculoId === 'ESTOQUE') {
+                inputKm.value = 0;
+            } else if (dbVeiculos[veiculoId]) {
+                inputKm.value = dbVeiculos[veiculoId].km_atual || 0;
+            }
+        };
+
+        // Salvar / Editar Pneu
+        document.getElementById('form-pneu').addEventListener('submit', async (e) => {
             e.preventDefault(); if(!isUserAdmin) return;
-            const btn = document.getElementById('btn-salvar-cfg'); btn.innerText = "Gravando..."; btn.disabled = true;
+            const id = document.getElementById('pn-id').value;
+            const veiculoId = document.getElementById('pn-veiculo').value;
             
-            const newConfig = {
-                whatsapp: document.getElementById('cfg-whatsapp').value.replace(/\D/g,''),
-                alertaDias: parseInt(document.getElementById('cfg-dias-alerta').value) || 30,
-                alertaKmPneu: parseInt(document.getElementById('cfg-km-pneu').value) || 1000,
-                alertaKmOleo: parseInt(document.getElementById('cfg-km-oleo').value) || 500,
-                adminEmails: document.getElementById('cfg-admins').value
+            const dadosPneu = {
+                fogo: document.getElementById('pn-fogo').value.toUpperCase(),
+                marca: document.getElementById('pn-marca').value,
+                custo: parseFloat(document.getElementById('pn-custo').value) || 0,
+                veiculo_id: veiculoId,
+                veiculo_placa: veiculoId === 'ESTOQUE' ? 'ESTOQUE' : dbVeiculos[veiculoId].placa,
+                km_instalacao: parseFloat(document.getElementById('pn-km-instalacao').value) || 0,
+                status: document.getElementById('pn-status').value
             };
 
-            try {
-                await setDoc(doc(db, "configuracoes", "sistema"), newConfig);
-                logAuditoria("Configurações", "Parâmetros e Acessos atualizados.");
-                alert("As configurações do sistema foram atualizadas com sucesso!");
-            } catch(error) {
-                alert("Erro ao gravar configurações.");
-            } finally {
-                btn.innerHTML = "<span class='material-icons'>save</span> Gravar Configurações Globais"; btn.disabled = false;
-            }
+            const p = id ? updateDoc(doc(db, "pneus", id), dadosPneu) : addDoc(collection(db, "pneus"), dadosPneu);
+            if(navigator.onLine) await p;
+            logAuditoria("Pneu", `Salvo Fogo ${dadosPneu.fogo}`);
+            document.getElementById('form-pneu').reset();
+            document.getElementById('pn-id').value = '';
+            carregarDropdownVeiculosPneu();
+            document.getElementById('pn-km-instalacao').value = 0;
         });
 
-        function atualizarPainelGlobalDeAlertas() {
-            let htmlAlertas = ''; let totalCritico = 0; const hoje = new Date();
-            const diasAlerta = sysConfig.alertaDias || 30; const kmOleoAlerta = sysConfig.alertaKmOleo || 500; const kmPneuAlerta = sysConfig.alertaKmPneu || 1000;
+        // Ouvinte do Banco de Pneus
+        onSnapshot(collection(db, "pneus"), (snap) => {
+            dbPneus = {};
+            snap.forEach(doc => { dbPneus[doc.id] = doc.data(); });
+            if(document.getElementById('tela-pneus').classList.contains('ativa')) window.renderizarListaPneus();
+            atualizarPainelGlobalDeAlertas(); // Recalcula alertas gerais
+        });
 
-            Object.values(dbMotoristas).forEach(m => {
-                if(m.status === 'ativo') {
-                    const checarData = (dStr, nome) => {
-                        if(!dStr) return; let dias = Math.ceil((new Date(dStr) - hoje) / (1000*60*60*24));
-                        if(dias < 0) { htmlAlertas += `<div style="color:#c62828; margin-bottom:6px;"><b>🚨 VENCIDO:</b> Motorista ${m.nome} - ${nome} venceu há ${Math.abs(dias)} dias.</div>`; totalCritico++; }
-                        else if(dias <= diasAlerta) { htmlAlertas += `<div style="color:#f57c00; margin-bottom:6px;"><b>⚠️ ATENÇÃO:</b> Motorista ${m.nome} - ${nome} vence em ${dias} dias.</div>`; totalCritico++; }
-                    };
-                    checarData(m.cnh_val, 'CNH'); checarData(m.toxicologico, 'Toxicológico');
-                }
-            });
+        // Renderização da Tela
+        window.renderizarListaPneus = () => {
+            const lista = document.getElementById('lista-pneus'); lista.innerHTML = '';
+            const filtro = document.getElementById('filtro-lista-pneus').value;
+            const limiteKm = sysConfig.alertaKmPneu || 60000;
 
-            Object.values(dbVeiculos).forEach(v => {
-                if(v.status === 'ativo') {
-                    if(v.km_oleo) {
-                        let dO = v.km_oleo - v.km_atual;
-                        if(dO <= 0) { htmlAlertas += `<div style="color:#c62828; margin-bottom:6px;"><b>🚨 URGENTE:</b> ${v.placa} - Passou da troca de Óleo (${Math.abs(dO)} km).</div>`; totalCritico++; }
-                        else if(dO <= kmOleoAlerta) { htmlAlertas += `<div style="color:#f57c00; margin-bottom:6px;"><b>⚠️ ATENÇÃO:</b> ${v.placa} - Troca de Óleo em ${dO} km.</div>`; totalCritico++; }
-                    }
-                    if(v.km_pneu) {
-                        let dP = v.km_pneu - v.km_atual;
-                        if(dP <= 0) { htmlAlertas += `<div style="color:#c62828; margin-bottom:6px;"><b>🚨 URGENTE:</b> ${v.placa} - Troca de Pneus vencida (${Math.abs(dP)} km).</div>`; totalCritico++; }
-                        else if(dP <= kmPneuAlerta) { htmlAlertas += `<div style="color:#f57c00; margin-bottom:6px;"><b>⚠️ ATENÇÃO:</b> ${v.placa} - Troca de Pneus em ${dP} km.</div>`; totalCritico++; }
-                    }
-                    const checarD = (dStr, nome) => {
-                        if(!dStr) return; let dias = Math.ceil((new Date(dStr) - hoje) / (1000*60*60*24));
-                        if(dias < 0) { htmlAlertas += `<div style="color:#c62828; margin-bottom:6px;"><b>🚨 VENCIDO:</b> ${v.placa} - ${nome} venceu há ${Math.abs(dias)} dias.</div>`; totalCritico++; }
-                        else if(dias <= diasAlerta) { htmlAlertas += `<div style="color:#f57c00; margin-bottom:6px;"><b>⚠️ ATENÇÃO:</b> ${v.placa} - ${nome} vence em ${dias} dias.</div>`; totalCritico++; }
-                    };
-                    checarD(v.antt, 'ANTT'); checarD(v.crono, 'Crono.'); checarD(v.ipva, 'IPVA');
-                }
-            });
-
-            document.getElementById('dash-alertas').innerText = totalCritico;
-            const painel = document.getElementById('dash-painel-alertas'); const listaAlertas = document.getElementById('lista-alertas-dashboard');
-            if(painel && listaAlertas) { if(totalCritico > 0) { painel.style.display = 'block'; listaAlertas.innerHTML = htmlAlertas; } else { painel.style.display = 'none'; listaAlertas.innerHTML = ''; } }
-        }
-
-        window.navegar = (telaId) => {
-            if (!isUserAdmin && ['manutencoes', 'custos', 'relatorios', 'veiculos', 'motoristas', 'acertos', 'configuracoes'].includes(telaId)) { alert("Acesso restrito à diretoria."); return; }
-            document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa')); document.getElementById('tela-' + telaId).classList.add('ativa'); document.getElementById('sidebar').classList.remove('open'); 
+            let arrPneus = Object.keys(dbPneus).map(k => ({id: k, ...dbPneus[k]}));
             
-            if(telaId === 'dashboard') carregarDashboard();
-            if(telaId === 'viagens') {
-                carregarDropdownsViagem(); const agora = new Date(); agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset()); document.getElementById('vi-data-saida').value = agora.toISOString().slice(0, 16);
-            }
-            if(telaId === 'acertos' && isUserAdmin) {
-                const sel = document.getElementById('acerto-motorista'); sel.innerHTML = '<option value="">Selecione o Motorista...</option>'; for(let id in dbMotoristas) { sel.innerHTML += `<option value="${id}">${dbMotoristas[id].nome}</option>`; }
-                const hoje = new Date(); document.getElementById('acerto-mes').value = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2, '0')}`; document.getElementById('area-resultado-acerto').style.display = 'none'; document.getElementById('pg-data').value = hoje.toISOString().split('T')[0];
-            }
-            if(telaId === 'relatorios' && isUserAdmin) carregarFiltrosRelatorio();
-            if(telaId === 'manutencoes' && isUserAdmin) {
-                const mVeic = document.getElementById('man-veiculo'); mVeic.innerHTML = ''; for(let id in dbVeiculos) { mVeic.innerHTML += `<option value="${id}">${dbVeiculos[id].placa} - ${dbVeiculos[id].modelo}</option>`; }
-                document.getElementById('man-data').value = new Date().toISOString().split('T')[0]; document.getElementById('man-tipo').dispatchEvent(new Event('change'));
-            }
-            if(telaId === 'custos' && isUserAdmin) { document.getElementById('cf-data').value = new Date().toISOString().split('T')[0]; }
+            arrPneus.forEach(pneu => {
+                // Filtros
+                if(filtro === 'rodando' && (pneu.veiculo_id === 'ESTOQUE' || pneu.status === 'sucata')) return;
+                if(filtro === 'ESTOQUE' && pneu.veiculo_id !== 'ESTOQUE') return;
+                if(filtro === 'sucata' && pneu.status !== 'sucata') return;
+
+                let kmRodado = 0;
+                let calcInfo = '';
+                let clAlerta = '';
+                let badge = '';
+                
+                // MÁGICA: Cálculo de KM individual baseado no caminhão
+                if(pneu.veiculo_id !== 'ESTOQUE' && dbVeiculos[pneu.veiculo_id]) {
+                    const kmCaminhao = dbVeiculos[pneu.veiculo_id].km_atual || 0;
+                    kmRodado = kmCaminhao - pneu.km_instalacao;
+                    if(kmRodado < 0) kmRodado = 0; // Proteção contra reset de painel
+                    
+                    calcInfo = `<p style="font-size:12px; font-weight:bold; color:#f57c00; margin-top:5px;">🏁 Rodou: ${kmRodado} km (Alvo Máx: ${limiteKm})</p>`;
+                    clAlerta = 'em-curso';
+
+                    if(kmRodado >= limiteKm) {
+                        clAlerta = 'alerta';
+                        badge = `<div class="badges-container"><span class="badge">Avaliar Recapagem</span></div>`;
+                    }
+                } else if (pneu.veiculo_id === 'ESTOQUE') {
+                    clAlerta = 'estoque';
+                    calcInfo = `<p style="font-size:12px; color:#1976d2; font-weight:bold; margin-top:5px;">📦 Aguardando Instalação</p>`;
+                }
+
+                if(pneu.status === 'sucata') {
+                    clAlerta = 'sucata';
+                    calcInfo = `<p style="font-size:12px; color:#9E9E9E; font-weight:bold; margin-top:5px;">🗑️ Fim de Vida Útil</p>`;
+                }
+
+                // Nomes amigáveis pro status
+                const mapaStatus = { 'novo': 'Novo', 'recapagem_1': '1ª Recapagem', 'recapagem_2': '2ª Recapagem', 'sucata': 'Sucata' };
+                let acaoClick = isUserAdmin ? `onclick="editarPneu('${pneu.id}')" style="cursor:pointer;"` : '';
+                let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirPneu('${pneu.id}', event)"><span class="material-icons">delete</span></button>` : '';
+
+                lista.innerHTML += `
+                    <div class="card-item ${clAlerta}" ${acaoClick}>
+                        ${badge}
+                        <h4>Fogo: ${pneu.fogo}</h4>
+                        <p><b>Marca:</b> ${pneu.marca} | <b>Status:</b> ${mapaStatus[pneu.status]}</p>
+                        <p style="font-size:11px; color:#666;">Instalado em: ${pneu.veiculo_placa} (KM Instalação: ${pneu.km_instalacao})</p>
+                        ${calcInfo}
+                        ${btnExcluir}
+                    </div>
+                `;
+            });
         };
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                avaliarPermissoes();
-                document.getElementById('tela-login').style.display = 'none'; document.getElementById('app-layout').style.display = 'block';
-                window.navegar('dashboard');
-            } else { document.getElementById('app-layout').style.display = 'none'; document.getElementById('tela-login').style.display = 'flex'; }
-        });
+        window.editarPneu = (id) => {
+            if(!isUserAdmin) return;
+            const p = dbPneus[id]; document.getElementById('pn-id').value = id;
+            document.getElementById('pn-fogo').value = p.fogo; document.getElementById('pn-marca').value = p.marca;
+            document.getElementById('pn-custo').value = p.custo; document.getElementById('pn-veiculo').value = p.veiculo_id;
+            document.getElementById('pn-km-instalacao').value = p.km_instalacao; document.getElementById('pn-status').value = p.status;
+            window.scrollTo(0,0);
+        };
 
-        document.getElementById('form-login').addEventListener('submit', (e) => {
-            e.preventDefault(); const btn = document.querySelector('#form-login .btn-submit'); btn.innerText = 'Autenticando...';
-            signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-senha').value).then(()=>btn.innerText='Entrar no Sistema').catch(() => { btn.innerText = 'Entrar no Sistema'; document.getElementById('login-erro').style.display='block'; });
-        });
+        window.excluirPneu = (id, event) => {
+            event.stopPropagation();
+            if(isUserAdmin && confirm("Excluir histórico deste pneu?")) { deleteDoc(doc(db, "pneus", id)); }
+        };
+
+        // ======================================================================
+
+        function atualizarPainelGlobalDeAlertas() { 
+            let htmlAlertas = ''; let totalCritico = 0; const hoje = new Date(); const diasAlerta = sysConfig.alertaDias || 30; const kmOleoAlerta = sysConfig.alertaKmOleo || 500; const kmPneuAlerta = sysConfig.alertaKmPneu || 60000; 
+            
+            // Verifica Pneus Individualmente (Novo)
+            Object.values(dbPneus).forEach(pneu => {
+                if(pneu.veiculo_id !== 'ESTOQUE' && pneu.status !== 'sucata' && dbVeiculos[pneu.veiculo_id]) {
+                    const kmRodado = dbVeiculos[pneu.veiculo_id].km_atual - pneu.km_instalacao;
+                    if(kmRodado >= kmPneuAlerta) {
+                        htmlAlertas += `<div style="color:#c62828; margin-bottom:6px;"><b>🚨 PNEU:</b> Fogo ${pneu.fogo} (${pneu.veiculo_placa}) atingiu ${kmRodado}km. Avaliar recapagem/troca.</div>`; totalCritico++;
+                    }
+                }
+            });
+
+            // Motoristas
+            Object.values(dbMotoristas).forEach(m => { if(m.status === 'ativo') { const checarData = (dStr, nome) => { if(!dStr) return; let dias = Math.ceil((new Date(dStr) - hoje) / (1000*60*60*24)); if(dias < 0) { htmlAlertas += `<div style="color:#c62828; margin-bottom:6px;"><b>🚨 VENCIDO:</b> ${m.nome} - ${nome} venceu.</div>`; totalCritico++; } else if(dias <= diasAlerta) { htmlAlertas += `<div style="color:#f57c00; margin-bottom:6px;"><b>⚠️ ATENÇÃO:</b> ${m.nome} - ${nome} vence em ${dias} dias.</div>`; totalCritico++; } }; checarData(m.cnh_val, 'CNH'); checarData(m.toxicologico, 'Toxicológico'); } }); 
+            
+            // Veiculos (Mantido Óleo e Docs, Pneu migrado pro novo módulo se preferir, mas mantido o legado)
+            Object.values(dbVeiculos).forEach(v => { if(v.status === 'ativo') { if(v.km_oleo) { let dO = v.km_oleo - v.km_atual; if(dO <= 0) { htmlAlertas += `<div style="color:#c62828; margin-bottom:6px;"><b>🚨 URGENTE:</b> ${v.placa} - Troca de Óleo.</div>`; totalCritico++; } else if(dO <= kmOleoAlerta) { htmlAlertas += `<div style="color:#f57c00; margin-bottom:6px;"><b>⚠️ ATENÇÃO:</b> ${v.placa} - Óleo em ${dO} km.</div>`; totalCritico++; } } const checarD = (dStr, nome) => { if(!dStr) return; let dias = Math.ceil((new Date(dStr) - hoje) / (1000*60*60*24)); if(dias < 0) { htmlAlertas += `<div style="color:#c62828; margin-bottom:6px;"><b>🚨 VENCIDO:</b> ${v.placa} - ${nome} venceu.</div>`; totalCritico++; } else if(dias <= diasAlerta) { htmlAlertas += `<div style="color:#f57c00; margin-bottom:6px;"><b>⚠️ ATENÇÃO:</b> ${v.placa} - ${nome} vence em ${dias} dias.</div>`; totalCritico++; } }; checarD(v.antt, 'ANTT'); checarD(v.crono, 'Crono.'); checarD(v.ipva, 'IPVA'); } }); 
+            
+            document.getElementById('dash-alertas').innerText = totalCritico; const painel = document.getElementById('dash-painel-alertas'); const listaAlertas = document.getElementById('lista-alertas-dashboard'); if(painel && listaAlertas) { if(totalCritico > 0) { painel.style.display = 'block'; listaAlertas.innerHTML = htmlAlertas; } else { painel.style.display = 'none'; listaAlertas.innerHTML = ''; } } 
+        }
+
+        window.navegar = (telaId) => { 
+            if (!isUserAdmin && ['manutencoes', 'custos', 'relatorios', 'veiculos', 'pneus', 'motoristas', 'acertos', 'configuracoes'].includes(telaId)) { alert("Acesso restrito."); return; } 
+            document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa')); document.getElementById('tela-' + telaId).classList.add('ativa'); document.getElementById('sidebar').classList.remove('open'); 
+            if(telaId === 'dashboard') carregarDashboard(); 
+            if(telaId === 'pneus') { carregarDropdownVeiculosPneu(); window.renderizarListaPneus(); }
+            if(telaId === 'viagens') { carregarDropdownsViagem(); const agora = new Date(); agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset()); document.getElementById('vi-data-saida').value = agora.toISOString().slice(0, 16); } 
+            if(telaId === 'acertos' && isUserAdmin) { const sel = document.getElementById('acerto-motorista'); sel.innerHTML = '<option value="">Selecione o Motorista...</option>'; for(let id in dbMotoristas) { sel.innerHTML += `<option value="${id}">${dbMotoristas[id].nome}</option>`; } document.getElementById('acerto-mes').value = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2, '0')}`; document.getElementById('area-resultado-acerto').style.display = 'none'; document.getElementById('pg-data').value = new Date().toISOString().split('T')[0]; } 
+            if(telaId === 'relatorios' && isUserAdmin) carregarFiltrosRelatorio(); 
+            if(telaId === 'manutencoes' && isUserAdmin) { const mVeic = document.getElementById('man-veiculo'); mVeic.innerHTML = ''; for(let id in dbVeiculos) { mVeic.innerHTML += `<option value="${id}">${dbVeiculos[id].placa} - ${dbVeiculos[id].modelo}</option>`; } document.getElementById('man-data').value = new Date().toISOString().split('T')[0]; document.getElementById('man-tipo').dispatchEvent(new Event('change')); } 
+            if(telaId === 'custos' && isUserAdmin) { document.getElementById('cf-data').value = new Date().toISOString().split('T')[0]; } 
+        };
+
+        onAuthStateChanged(auth, (user) => { if (user) { avaliarPermissoes(); document.getElementById('tela-login').style.display = 'none'; document.getElementById('app-layout').style.display = 'block'; window.navegar('dashboard'); } else { document.getElementById('app-layout').style.display = 'none'; document.getElementById('tela-login').style.display = 'flex'; } });
+        document.getElementById('form-login').addEventListener('submit', (e) => { e.preventDefault(); const btn = document.querySelector('#form-login .btn-submit'); btn.innerText = 'Autenticando...'; signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-senha').value).then(()=>btn.innerText='Entrar no Sistema').catch(() => { btn.innerText = 'Entrar no Sistema'; document.getElementById('login-erro').style.display='block'; }); });
         window.fazerLogout = () => signOut(auth);
 
-        window.excluirCustoFixo = async (id, event) => { event.stopPropagation(); if(!isUserAdmin) return; if(confirm("ATENÇÃO: Deseja excluir esta Despesa permanentemente?")) { try { await deleteDoc(doc(db, "custos_fixos", id)); logAuditoria("Exclusão", `Custo Fixo excluído`); } catch(e) {} } };
-        window.excluirVeiculo = async (id, event) => { event.stopPropagation(); if(!isUserAdmin) return; if(confirm("ATENÇÃO: Excluir um veículo pode quebrar histórico. Tem certeza?")) { try { await deleteDoc(doc(db, "veiculos", id)); logAuditoria("Exclusão", `Veículo excluído`); } catch(e) {} } };
-        window.excluirMotorista = async (id, event) => { event.stopPropagation(); if(!isUserAdmin) return; if(confirm("ATENÇÃO: Excluir um motorista pode afetar relatórios. Tem certeza?")) { try { await deleteDoc(doc(db, "motoristas", id)); logAuditoria("Exclusão", `Motorista excluído`); } catch(e) {} } };
-        window.excluirManutencao = async (id, event) => { event.stopPropagation(); if(!isUserAdmin) return; if(confirm("ATENÇÃO: Deseja excluir este registro de oficina?")) { try { await deleteDoc(doc(db, "manutencoes", id)); logAuditoria("Exclusão", `Manutenção excluída`); } catch(e) {} } };
-        window.excluirViagem = async (id, event) => { event.stopPropagation(); if(!isUserAdmin) return; if(confirm("ATENÇÃO: Deseja cancelar e apagar esta viagem permanentemente?")) { try { await deleteDoc(doc(db, "viagens", id)); logAuditoria("Exclusão", `Viagem cancelada`); } catch(e) {} } };
+        window.excluirCustoFixo = (id, event) => { event.stopPropagation(); if(isUserAdmin && confirm("Excluir?")) { deleteDoc(doc(db, "custos_fixos", id)); } };
+        window.excluirVeiculo = (id, event) => { event.stopPropagation(); if(isUserAdmin && confirm("Excluir?")) { deleteDoc(doc(db, "veiculos", id)); } };
+        window.excluirMotorista = (id, event) => { event.stopPropagation(); if(isUserAdmin && confirm("Excluir?")) { deleteDoc(doc(db, "motoristas", id)); } };
+        window.excluirManutencao = (id, event) => { event.stopPropagation(); if(isUserAdmin && confirm("Excluir?")) { deleteDoc(doc(db, "manutencoes", id)); } };
+        window.excluirViagem = (id, event) => { event.stopPropagation(); if(isUserAdmin && confirm("Cancelar viagem?")) { deleteDoc(doc(db, "viagens", id)); } };
 
-        onSnapshot(collection(db, "pagamentos_motoristas"), (snap) => {
-            dbPagamentos = {}; snap.forEach(doc => { dbPagamentos[doc.id] = {id: doc.id, ...doc.data()}; });
-            if(document.getElementById('tela-acertos').classList.contains('ativa')) { window.gerarRelatorioAcerto(); }
-            if(document.getElementById('tela-dashboard').classList.contains('ativa')) { carregarDashboard(); }
-        });
+        onSnapshot(collection(db, "pagamentos_motoristas"), (snap) => { dbPagamentos = {}; snap.forEach(doc => { dbPagamentos[doc.id] = {id: doc.id, ...doc.data()}; }); if(document.getElementById('tela-acertos').classList.contains('ativa')) { window.gerarRelatorioAcerto(); } if(document.getElementById('tela-dashboard').classList.contains('ativa')) { carregarDashboard(); } });
+        document.getElementById('form-pagamento-mot').addEventListener('submit', async (e) => { e.preventDefault(); if(!isUserAdmin) return; const mId = document.getElementById('pg-mot-id').value; if(!mId) return; const promessa = addDoc(collection(db, "pagamentos_motoristas"), { motorista_id: mId, motorista_nome: dbMotoristas[mId].nome, data_pagamento: document.getElementById('pg-data').value, valor: parseFloat(document.getElementById('pg-valor').value), descricao: document.getElementById('pg-desc').value }); if(navigator.onLine) await promessa; logAuditoria("Pagamento", `Lançado`); document.getElementById('pg-valor').value = ''; document.getElementById('pg-desc').value = ''; });
 
-        document.getElementById('form-pagamento-mot').addEventListener('submit', async (e) => {
-            e.preventDefault(); if(!isUserAdmin) return;
-            const mId = document.getElementById('pg-mot-id').value; if(!mId) return alert("Selecione um motorista primeiro.");
-            await addDoc(collection(db, "pagamentos_motoristas"), { motorista_id: mId, motorista_nome: dbMotoristas[mId].nome, data_pagamento: document.getElementById('pg-data').value, valor: parseFloat(document.getElementById('pg-valor').value), descricao: document.getElementById('pg-desc').value });
-            logAuditoria("Pagamento/Vale", `Lançado para ${dbMotoristas[mId].nome}`); document.getElementById('pg-valor').value = ''; document.getElementById('pg-desc').value = '';
-        });
+        window.gerarRelatorioAcerto = () => { /* Logica de Acerto Base 3.5 */ const mId = document.getElementById('acerto-motorista').value; const mesAno = document.getElementById('acerto-mes').value; if(!mId || !mesAno) return; document.getElementById('pg-mot-id').value = mId; const [anoStr, mesStr] = mesAno.split('-'); const ano = parseInt(anoStr); const mes = parseInt(mesStr) - 1; let totalComissao = 0; let totalPago = 0; let extrato = []; Object.values(dbViagens).forEach(v => { if(v.motorista_id === mId && v.status === 'concluida' && v.data_saida) { const d = new Date(v.data_saida); if(d.getFullYear() === ano && d.getMonth() === mes) { totalComissao += (v.valor_comissao || 0); extrato.push({ tipo: 'viagem', data: d, dataStr: d.toLocaleDateString('pt-BR'), desc: `Viagem: ${v.destino}`, valor: (v.valor_comissao||0) }); } } }); Object.values(dbPagamentos).forEach(p => { if(p.motorista_id === mId && p.data_pagamento) { const d = new Date(p.data_pagamento + "T12:00:00"); if(d.getFullYear() === ano && d.getMonth() === mes) { totalPago += (p.valor || 0); extrato.push({ tipo: 'pagamento', data: d, dataStr: d.toLocaleDateString('pt-BR'), desc: `Vale: ${p.descricao}`, valor: (p.valor||0) }); } } }); document.getElementById('acerto-comissoes').innerText = "R$ " + totalComissao.toFixed(2).replace('.', ','); document.getElementById('acerto-pagos').innerText = "R$ " + totalPago.toFixed(2).replace('.', ','); const saldo = totalComissao - totalPago; const elSaldo = document.getElementById('acerto-saldo'); elSaldo.innerText = "R$ " + saldo.toFixed(2).replace('.', ','); elSaldo.style.color = saldo < 0 ? '#c62828' : '#2e7d32'; extrato.sort((a,b) => a.data - b.data); const lista = document.getElementById('lista-extrato-acerto'); lista.innerHTML = ''; if(extrato.length === 0) lista.innerHTML = '<p style="color:#666;">Nenhuma movimentação.</p>'; extrato.forEach(item => { const cor = item.tipo === 'viagem' ? '#1a237e' : '#f57c00'; const sinal = item.tipo === 'viagem' ? '+' : '-'; lista.innerHTML += `<div class="card-item" style="border-left-color: ${cor};"><div style="display:flex; justify-content:space-between; align-items:center;"><div><h4 style="color:${cor};">${item.desc}</h4><p>${item.dataStr}</p></div><div style="font-weight:bold; font-size:16px; color:${cor};">${sinal} R$ ${item.valor.toFixed(2).replace('.', ',')}</div></div></div>`; }); const nomeMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]; document.getElementById('print-titulo-acerto').innerText = `Acerto Financeiro - ${dbMotoristas[mId].nome} (${nomeMeses[mes]}/${ano})`; document.getElementById('print-titulo-acerto').style.display = 'block'; document.getElementById('area-resultado-acerto').style.display = 'block'; };
+        window.enviarAcertoWhatsApp = () => { const mId = document.getElementById('acerto-motorista').value; const mesAno = document.getElementById('acerto-mes').value; if(!mId || !mesAno) return; const mot = dbMotoristas[mId]; const [anoStr, mesStr] = mesAno.split('-'); const mesNome = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][parseInt(mesStr) - 1]; let texto = `*FECHAMENTO DE ACERTO - Jb Transportes*\n\n*Motorista:* ${mot.nome}\n*Competência:* ${mesNome}/${anoStr}\n\n💰 *RESUMO DO MÊS*\nComissões (Crédito): ${document.getElementById('acerto-comissoes').innerText}\nVales (Débito): ${document.getElementById('acerto-pagos').innerText}\n--------------------\n*SALDO FINAL:* ${document.getElementById('acerto-saldo').innerText}\n\n_Para ver o extrato detalhado dia a dia, acesse o seu painel de motorista no sistema._`; let tel = (mot.telefone || "").replace(/\D/g, ''); if(tel.length < 10) { if(!confirm("O motorista não possui WhatsApp válido. Abrir contato manualmente?")) return; tel = ""; } window.open(tel.length >= 10 ? `https://wa.me/55${tel}?text=${window.encodeURIComponent(texto)}` : `https://wa.me/?text=${window.encodeURIComponent(texto)}`, '_blank'); };
 
-        window.gerarRelatorioAcerto = () => {
-            const mId = document.getElementById('acerto-motorista').value; const mesAno = document.getElementById('acerto-mes').value;
-            if(!mId || !mesAno) return; document.getElementById('pg-mot-id').value = mId; 
-            const [anoStr, mesStr] = mesAno.split('-'); const ano = parseInt(anoStr); const mes = parseInt(mesStr) - 1; 
-            let totalComissao = 0; let totalPago = 0; let extrato = []; 
-            
-            Object.values(dbViagens).forEach(v => {
-                if(v.motorista_id === mId && v.status === 'concluida' && v.data_saida) {
-                    const d = new Date(v.data_saida);
-                    if(d.getFullYear() === ano && d.getMonth() === mes) { totalComissao += (v.valor_comissao || 0); extrato.push({ tipo: 'viagem', data: d, dataStr: d.toLocaleDateString('pt-BR'), desc: `Viagem: ${v.destino}`, valor: (v.valor_comissao||0) }); }
-                }
-            });
-            Object.values(dbPagamentos).forEach(p => {
-                if(p.motorista_id === mId && p.data_pagamento) {
-                    const d = new Date(p.data_pagamento + "T12:00:00");
-                    if(d.getFullYear() === ano && d.getMonth() === mes) { totalPago += (p.valor || 0); extrato.push({ tipo: 'pagamento', data: d, dataStr: d.toLocaleDateString('pt-BR'), desc: `Pagamento/Vale: ${p.descricao}`, valor: (p.valor||0) }); }
-                }
-            });
-            
-            document.getElementById('acerto-comissoes').innerText = "R$ " + totalComissao.toFixed(2).replace('.', ','); 
-            document.getElementById('acerto-pagos').innerText = "R$ " + totalPago.toFixed(2).replace('.', ',');
-            const saldo = totalComissao - totalPago; const elSaldo = document.getElementById('acerto-saldo');
-            elSaldo.innerText = "R$ " + saldo.toFixed(2).replace('.', ','); elSaldo.style.color = saldo < 0 ? '#c62828' : '#2e7d32';
-            
-            extrato.sort((a,b) => a.data - b.data); const lista = document.getElementById('lista-extrato-acerto'); lista.innerHTML = '';
-            if(extrato.length === 0) lista.innerHTML = '<p style="color:#666;">Nenhuma movimentação registada para este mês.</p>';
-            extrato.forEach(item => { const cor = item.tipo === 'viagem' ? '#1a237e' : '#f57c00'; const sinal = item.tipo === 'viagem' ? '+' : '-'; lista.innerHTML += `<div class="card-item" style="border-left-color: ${cor};"><div style="display:flex; justify-content:space-between; align-items:center;"><div><h4 style="color:${cor};">${item.desc}</h4><p>${item.dataStr}</p></div><div style="font-weight:bold; font-size:16px; color:${cor};">${sinal} R$ ${item.valor.toFixed(2).replace('.', ',')}</div></div></div>`; });
-            
-            const nomeMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            const tituloPrint = document.getElementById('print-titulo-acerto');
-            tituloPrint.innerText = `Acerto Financeiro - ${dbMotoristas[mId].nome} (${nomeMeses[mes]}/${ano})`;
-            tituloPrint.style.display = 'block';
+        document.getElementById('dash-mes-filtro').addEventListener('change', carregarDashboard); document.getElementById('dm-mes-filtro').addEventListener('change', carregarDashboard);
+        function carregarDashboard() { try { if(isUserAdmin) { document.getElementById('dash-veiculos').innerText = Object.keys(dbVeiculos).filter(k => dbVeiculos[k].status==='ativo').length; document.getElementById('dash-motoristas').innerText = Object.keys(dbMotoristas).filter(k => dbMotoristas[k].status==='ativo').length; let inputMes = document.getElementById('dash-mes-filtro'); if (!inputMes.value) { const hoje = new Date(); inputMes.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`; } const [anoFiltro, mesFiltro] = inputMes.value.split('-').map(Number); let tFretes = 0; let tCustosFrota = 0; let tCustosFixos = 0; let kmMes = 0; let rankV = {}; let rankM = {}; const nomeMeses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]; let labelsGrafico = []; let histReceita = {}; let histCustos = {}; for(let i=5; i>=0; i--) { let d = new Date(); d.setMonth(d.getMonth()-i); let key = `${d.getFullYear()}-${d.getMonth()}`; labelsGrafico.push(`${nomeMeses[d.getMonth()]}/${String(d.getFullYear()).slice(-2)}`); histReceita[key] = 0; histCustos[key] = 0; } Object.values(dbViagens).forEach(v => { if(v.data_saida && v.status === 'concluida'){ const dV = new Date(v.data_saida); const vAno = dV.getFullYear(); const vMes = dV.getMonth(); const key = `${vAno}-${vMes}`; if(histReceita[key] !== undefined) { histReceita[key] += (v.valor_frete || 0); histCustos[key] += (v.total_custos || 0); } if(vAno === anoFiltro && (vMes + 1) === mesFiltro) { tFretes += (v.valor_frete || 0); tCustosFrota += (v.total_custos || 0); kmMes += (v.distancia || 0); rankV[v.veiculo_nome] = (rankV[v.veiculo_nome] || 0) + (v.distancia||0); rankM[v.motorista_nome] = (rankM[v.motorista_nome] || 0) + (v.distancia||0); } } }); Object.values(dbManutencoes).forEach(m => { if(m.data_manutencao) { const dM = new Date(m.data_manutencao + "T12:00:00"); if(histCustos[`${dM.getFullYear()}-${dM.getMonth()}`] !== undefined) histCustos[`${dM.getFullYear()}-${dM.getMonth()}`] += (m.custo || 0); if(dM.getFullYear() === anoFiltro && (dM.getMonth() + 1) === mesFiltro) tCustosFrota += (m.custo || 0); } }); Object.values(dbCustosFixos).forEach(c => { if(c.data_pagamento) { const dC = new Date(c.data_pagamento + "T12:00:00"); if(histCustos[`${dC.getFullYear()}-${dC.getMonth()}`] !== undefined) histCustos[`${dC.getFullYear()}-${dC.getMonth()}`] += (c.valor || 0); if(dC.getFullYear() === anoFiltro && (dC.getMonth() + 1) === mesFiltro) tCustosFixos += (c.valor || 0); } }); let lucroReal = tFretes - tCustosFrota - tCustosFixos; let margemLucro = tFretes > 0 ? (lucroReal / tFretes) * 100 : 0; document.getElementById('dash-km-mes').innerText = kmMes + " km"; document.getElementById('dash-faturamento').innerText = "R$ " + tFretes.toLocaleString('pt-BR', {minimumFractionDigits: 2}); document.getElementById('dash-custos-frota').innerText = "R$ " + tCustosFrota.toLocaleString('pt-BR', {minimumFractionDigits: 2}); document.getElementById('dash-custos-fixos').innerText = "R$ " + tCustosFixos.toLocaleString('pt-BR', {minimumFractionDigits: 2}); const elLucro = document.getElementById('dash-lucro'); elLucro.innerText = "R$ " + lucroReal.toLocaleString('pt-BR', {minimumFractionDigits: 2}); elLucro.style.color = lucroReal < 0 ? '#c62828' : '#2e7d32'; const elMargem = document.getElementById('dash-margem'); elMargem.innerText = margemLucro.toFixed(1).replace('.', ',') + "% Margem"; if(margemLucro >= 15) { elMargem.style.background = '#e8f5e9'; elMargem.style.color = '#2e7d32'; } else if(margemLucro >= 0) { elMargem.style.background = '#fff3e0'; elMargem.style.color = '#f57c00'; } else { elMargem.style.background = '#ffebee'; elMargem.style.color = '#c62828'; } let topV = Object.keys(rankV).reduce((a, b) => rankV[a] > rankV[b] ? a : b, null); let topM = Object.keys(rankM).reduce((a, b) => rankM[a] > rankM[b] ? a : b, null); document.getElementById('dash-top-veiculo').innerText = topV ? `${topV} (${rankV[topV]} km)` : '-'; document.getElementById('dash-top-mot').innerText = topM ? `${topM} (${rankM[topM]} km)` : '-'; if(graficoApp) { graficoApp.destroy(); } const ctx = document.getElementById('graficoEvolucao').getContext('2d'); graficoApp = new Chart(ctx, { type: 'bar', data: { labels: labelsGrafico, datasets: [{ label: 'Receita Bruta', data: Object.values(histReceita), backgroundColor: '#1a237e', borderRadius: 4 }, { label: 'Custos Totais', data: Object.values(histCustos), backgroundColor: '#f57c00', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } } } }); } else { if(!meuMotoristaId) return; document.getElementById('nome-motorista-dash').innerText = dbMotoristas[meuMotoristaId].nome; let inputMesMot = document.getElementById('dm-mes-filtro'); if (!inputMesMot.value) { const hoje = new Date(); inputMesMot.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`; } const [anoMotStr, mesMotStr] = inputMesMot.value.split('-'); const anoAtual = parseInt(anoMotStr); const mesAtual = parseInt(mesMotStr) - 1; let tComissao = 0; let tPago = 0; let tKm = 0; let qtdViagens = 0; Object.values(dbViagens).forEach(v => { if(v.motorista_id === meuMotoristaId && v.data_saida) { const d = new Date(v.data_saida); if(d.getMonth() === mesAtual && d.getFullYear() === anoAtual) { qtdViagens++; if(v.status === 'concluida') { tKm += (v.distancia||0); tComissao += (v.valor_comissao||0); } } } }); Object.values(dbPagamentos).forEach(p => { if(p.motorista_id === meuMotoristaId && p.data_pagamento) { const d = new Date(p.data_pagamento+"T12:00:00"); if(d.getMonth() === mesAtual && d.getFullYear() === anoAtual) { tPago += (p.valor||0); } } }); document.getElementById('dm-viagens').innerText = qtdViagens; document.getElementById('dm-km').innerText = tKm + " km"; document.getElementById('dm-comissao').innerText = "R$ " + tComissao.toLocaleString('pt-BR', {minimumFractionDigits: 2}); document.getElementById('dm-vales').innerText = "R$ " + tPago.toLocaleString('pt-BR', {minimumFractionDigits: 2}); let saldo = tComissao - tPago; let elSaldo = document.getElementById('dm-saldo'); elSaldo.innerText = "R$ " + saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2}); elSaldo.style.color = saldo < 0 ? '#c62828' : '#2e7d32'; } } catch(e) { console.log("Dash erro:", e); } }
 
-            document.getElementById('area-resultado-acerto').style.display = 'block';
-        };
-
-        // ================= FUNÇÃO ATUALIZADA: WHATSAPP DO MOTORISTA =================
-        window.enviarAcertoWhatsApp = () => {
-            const mId = document.getElementById('acerto-motorista').value;
-            const mesAno = document.getElementById('acerto-mes').value;
-            if(!mId || !mesAno) return;
-            
-            const mot = dbMotoristas[mId];
-            const nomeMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            const [anoStr, mesStr] = mesAno.split('-');
-            const mesNome = nomeMeses[parseInt(mesStr) - 1];
-
-            const tComissao = document.getElementById('acerto-comissoes').innerText;
-            const tPago = document.getElementById('acerto-pagos').innerText;
-            const tSaldo = document.getElementById('acerto-saldo').innerText;
-
-            let texto = `*FECHAMENTO DE ACERTO - Jb Transportes*\n\n`;
-            texto += `*Motorista:* ${mot.nome}\n`;
-            texto += `*Competência:* ${mesNome}/${anoStr}\n\n`;
-            texto += `💰 *RESUMO DO MÊS*\n`;
-            texto += `Comissões (Crédito): ${tComissao}\n`;
-            texto += `Vales/Adiantamentos (Débito): ${tPago}\n`;
-            texto += `--------------------\n`;
-            texto += `*SALDO FINAL:* ${tSaldo}\n\n`;
-            texto += `_Para ver o extrato detalhado dia a dia, acesse o seu painel de motorista no sistema._`;
-
-            // Lógica inteligente: Tenta usar o telefone do próprio motorista
-            let telefoneFormatado = (mot.telefone || "").replace(/\D/g, '');
-            
-            if(telefoneFormatado.length < 10) {
-                const prosseguir = confirm("⚠️ ATENÇÃO: O cadastro deste motorista não possui um número de WhatsApp válido (com DDD). \n\nDeseja abrir o WhatsApp mesmo assim e escolher o contato manualmente?");
-                if(!prosseguir) return;
-                telefoneFormatado = ""; // Deixa vazio para abrir a tela de escolha de contato
-            }
-
-            const url = telefoneFormatado.length >= 10 
-                ? `https://wa.me/55${telefoneFormatado}?text=${window.encodeURIComponent(texto)}`
-                : `https://wa.me/?text=${window.encodeURIComponent(texto)}`;
-
-            window.open(url, '_blank');
-        };
-
-        // Escuta mudança de filtro (Dashboard Admin e Dashboard Motorista)
-        document.getElementById('dash-mes-filtro').addEventListener('change', carregarDashboard);
-        document.getElementById('dm-mes-filtro').addEventListener('change', carregarDashboard);
-
-        function carregarDashboard() {
-            try {
-                if(isUserAdmin) {
-                    document.getElementById('dash-veiculos').innerText = Object.keys(dbVeiculos).filter(k => dbVeiculos[k].status==='ativo').length;
-                    document.getElementById('dash-motoristas').innerText = Object.keys(dbMotoristas).filter(k => dbMotoristas[k].status==='ativo').length;
-                    
-                    let inputMes = document.getElementById('dash-mes-filtro');
-                    if (!inputMes.value) { const hoje = new Date(); inputMes.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`; }
-                    const [anoFiltro, mesFiltro] = inputMes.value.split('-').map(Number);
-                    let tFretes = 0; let tCustosFrota = 0; let tCustosFixos = 0; let kmMes = 0; let rankV = {}; let rankM = {};
-                    const nomeMeses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-                    let labelsGrafico = []; let histReceita = {}; let histCustos = {};
-                    
-                    for(let i=5; i>=0; i--) { let d = new Date(); d.setMonth(d.getMonth()-i); let key = `${d.getFullYear()}-${d.getMonth()}`; let label = `${nomeMeses[d.getMonth()]}/${String(d.getFullYear()).slice(-2)}`; labelsGrafico.push(label); histReceita[key] = 0; histCustos[key] = 0; }
-
-                    Object.values(dbViagens).forEach(v => { 
-                        if(v.data_saida && v.status === 'concluida'){
-                            const dV = new Date(v.data_saida); const vAno = dV.getFullYear(); const vMes = dV.getMonth(); const keyGrafico = `${vAno}-${vMes}`;
-                            if(histReceita[keyGrafico] !== undefined) { histReceita[keyGrafico] += (v.valor_frete || 0); histCustos[keyGrafico] += (v.total_custos || 0); }
-                            if(vAno === anoFiltro && (vMes + 1) === mesFiltro) { tFretes += (v.valor_frete || 0); tCustosFrota += (v.total_custos || 0); kmMes += (v.distancia || 0); rankV[v.veiculo_nome] = (rankV[v.veiculo_nome] || 0) + (v.distancia||0); rankM[v.motorista_nome] = (rankM[v.motorista_nome] || 0) + (v.distancia||0); }
-                        }
-                    });
-
-                    Object.values(dbManutencoes).forEach(m => { if(m.data_manutencao) { const dM = new Date(m.data_manutencao + "T12:00:00"); const keyGrafico = `${dM.getFullYear()}-${dM.getMonth()}`; if(histCustos[keyGrafico] !== undefined) histCustos[keyGrafico] += (m.custo || 0); if(dM.getFullYear() === anoFiltro && (dM.getMonth() + 1) === mesFiltro) tCustosFrota += (m.custo || 0); } });
-                    Object.values(dbCustosFixos).forEach(c => { if(c.data_pagamento) { const dC = new Date(c.data_pagamento + "T12:00:00"); const keyGrafico = `${dC.getFullYear()}-${dC.getMonth()}`; if(histCustos[keyGrafico] !== undefined) histCustos[keyGrafico] += (c.valor || 0); if(dC.getFullYear() === anoFiltro && (dC.getMonth() + 1) === mesFiltro) tCustosFixos += (c.valor || 0); } });
-
-                    let lucroReal = tFretes - tCustosFrota - tCustosFixos;
-                    let margemLucro = tFretes > 0 ? (lucroReal / tFretes) * 100 : 0; 
-
-                    document.getElementById('dash-km-mes').innerText = kmMes + " km";
-                    document.getElementById('dash-faturamento').innerText = "R$ " + tFretes.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-                    document.getElementById('dash-custos-frota').innerText = "R$ " + tCustosFrota.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-                    document.getElementById('dash-custos-fixos').innerText = "R$ " + tCustosFixos.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-                    
-                    const elLucro = document.getElementById('dash-lucro'); elLucro.innerText = "R$ " + lucroReal.toLocaleString('pt-BR', {minimumFractionDigits: 2}); elLucro.style.color = lucroReal < 0 ? '#c62828' : '#2e7d32';
-                    
-                    const elMargem = document.getElementById('dash-margem');
-                    elMargem.innerText = margemLucro.toFixed(1).replace('.', ',') + "% Margem";
-                    if(margemLucro >= 15) { elMargem.style.background = '#e8f5e9'; elMargem.style.color = '#2e7d32'; } 
-                    else if(margemLucro >= 0) { elMargem.style.background = '#fff3e0'; elMargem.style.color = '#f57c00'; } 
-                    else { elMargem.style.background = '#ffebee'; elMargem.style.color = '#c62828'; }
-
-                    let topV = Object.keys(rankV).reduce((a, b) => rankV[a] > rankV[b] ? a : b, null); let topM = Object.keys(rankM).reduce((a, b) => rankM[a] > rankM[b] ? a : b, null);
-                    document.getElementById('dash-top-veiculo').innerText = topV ? `${topV} (${rankV[topV]} km)` : '-'; document.getElementById('dash-top-mot').innerText = topM ? `${topM} (${rankM[topM]} km)` : '-';
-
-                    if(graficoApp) { graficoApp.destroy(); }
-                    const ctx = document.getElementById('graficoEvolucao').getContext('2d');
-                    graficoApp = new Chart(ctx, { type: 'bar', data: { labels: labelsGrafico, datasets: [{ label: 'Receita Bruta', data: Object.values(histReceita), backgroundColor: '#1a237e', borderRadius: 4 }, { label: 'Custos Totais', data: Object.values(histCustos), backgroundColor: '#f57c00', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom' } } } });
-                
-                } else {
-                    // ================= ATUALIZADO: DASHBOARD DO MOTORISTA =================
-                    if(!meuMotoristaId) return;
-                    document.getElementById('nome-motorista-dash').innerText = dbMotoristas[meuMotoristaId].nome;
-                    
-                    let inputMesMot = document.getElementById('dm-mes-filtro');
-                    if (!inputMesMot.value) { 
-                        const hoje = new Date(); 
-                        inputMesMot.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`; 
-                    }
-                    const [anoMotStr, mesMotStr] = inputMesMot.value.split('-');
-                    const anoAtual = parseInt(anoMotStr);
-                    const mesAtual = parseInt(mesMotStr) - 1; // 0-indexed para bater com getMonth()
-                    
-                    let tComissao = 0; let tPago = 0; let tKm = 0; let qtdViagens = 0; 
-                    
-                    Object.values(dbViagens).forEach(v => { 
-                        if(v.motorista_id === meuMotoristaId && v.data_saida) { 
-                            const d = new Date(v.data_saida); 
-                            if(d.getMonth() === mesAtual && d.getFullYear() === anoAtual) { 
-                                qtdViagens++; 
-                                if(v.status === 'concluida') { 
-                                    tKm += (v.distancia||0); 
-                                    tComissao += (v.valor_comissao||0); 
-                                } 
-                            } 
-                        } 
-                    });
-                    
-                    Object.values(dbPagamentos).forEach(p => { 
-                        if(p.motorista_id === meuMotoristaId && p.data_pagamento) { 
-                            const d = new Date(p.data_pagamento+"T12:00:00"); 
-                            if(d.getMonth() === mesAtual && d.getFullYear() === anoAtual) { 
-                                tPago += (p.valor||0); 
-                            } 
-                        } 
-                    });
-                    
-                    document.getElementById('dm-viagens').innerText = qtdViagens; 
-                    document.getElementById('dm-km').innerText = tKm + " km"; 
-                    document.getElementById('dm-comissao').innerText = "R$ " + tComissao.toLocaleString('pt-BR', {minimumFractionDigits: 2}); 
-                    document.getElementById('dm-vales').innerText = "R$ " + tPago.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-                    
-                    let saldo = tComissao - tPago; 
-                    let elSaldo = document.getElementById('dm-saldo'); 
-                    elSaldo.innerText = "R$ " + saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2}); 
-                    elSaldo.style.color = saldo < 0 ? '#c62828' : '#2e7d32';
-                }
-            } catch(e) { console.log("Dash erro:", e); } 
-        }
-
-        document.getElementById('form-veiculo').addEventListener('submit', async (e) => { 
-            e.preventDefault(); if(!isUserAdmin) return;
-            const id = document.getElementById('v-id').value; 
-            const dados = { placa: document.getElementById('v-placa').value.toUpperCase(), modelo: document.getElementById('v-modelo').value, ano: document.getElementById('v-ano').value, km_atual: parseFloat(document.getElementById('v-km').value), km_pneu: parseFloat(document.getElementById('v-km-pneu').value) || null, km_oleo: parseFloat(document.getElementById('v-km-oleo').value) || null, antt: document.getElementById('v-antt').value || null, crono: document.getElementById('v-crono').value || null, ipva: document.getElementById('v-ipva').value || null, tipo: document.getElementById('v-tipo').value, combustivel: document.getElementById('v-combustivel').value, status: document.getElementById('v-status').value }; 
-            if(id) await updateDoc(doc(db, "veiculos", id), dados); else await addDoc(collection(db, "veiculos"), dados); 
-            logAuditoria("Veículo", `Gravado ${dados.placa}`); document.getElementById('form-veiculo').reset(); document.getElementById('v-id').value = ''; 
-        });
+        document.getElementById('form-veiculo').addEventListener('submit', async (e) => { e.preventDefault(); if(!isUserAdmin) return; const id = document.getElementById('v-id').value; const dados = { placa: document.getElementById('v-placa').value.toUpperCase(), modelo: document.getElementById('v-modelo').value, ano: document.getElementById('v-ano').value, km_atual: parseFloat(document.getElementById('v-km').value), km_oleo: parseFloat(document.getElementById('v-km-oleo').value) || null, antt: document.getElementById('v-antt').value || null, crono: document.getElementById('v-crono').value || null, ipva: document.getElementById('v-ipva').value || null, tipo: document.getElementById('v-tipo').value, combustivel: document.getElementById('v-combustivel').value, status: document.getElementById('v-status').value }; const p = id ? updateDoc(doc(db, "veiculos", id), dados) : addDoc(collection(db, "veiculos"), dados); if(navigator.onLine) await p; logAuditoria("Veículo", `Gravado ${dados.placa}`); document.getElementById('form-veiculo').reset(); document.getElementById('v-id').value = ''; });
         
-        onSnapshot(collection(db, "veiculos"), (snap) => { 
-            const lista = document.getElementById('lista-veiculos'); lista.innerHTML = ''; dbVeiculos = {}; const hoje = new Date();
-            const dAlerta = sysConfig.alertaDias || 30; const kOleo = sysConfig.alertaKmOleo || 500; const kPneu = sysConfig.alertaKmPneu || 1000;
+        onSnapshot(collection(db, "veiculos"), (snap) => { const lista = document.getElementById('lista-veiculos'); lista.innerHTML = ''; dbVeiculos = {}; const hoje = new Date(); const dAlerta = sysConfig.alertaDias || 30; const kOleo = sysConfig.alertaKmOleo || 500; snap.forEach(doc => { const v = doc.data(); dbVeiculos[doc.id] = v; let avisos = []; let clAlerta = v.status; if(v.status === 'ativo') { if(v.km_oleo) { let dO = v.km_oleo - v.km_atual; if(dO<=0) { avisos.push(`<span class="badge">Óleo Venc.</span>`); clAlerta='alerta'; } else if(dO<=kOleo) { avisos.push(`<span class="badge warning">Óleo Próx.</span>`); } } const checarD = (dStr, nome) => { if(!dStr) return; let dias = Math.ceil((new Date(dStr) - hoje) / (1000*60*60*24)); if(dias < 0) { avisos.push(`<span class="badge">${nome} Venc.</span>`); clAlerta='alerta'; } else if(dias <= dAlerta) { avisos.push(`<span class="badge warning">${nome} em ${dias}d</span>`); } }; checarD(v.antt, 'ANTT'); checarD(v.crono, 'Crono.'); checarD(v.ipva, 'IPVA'); } let boxAv = avisos.length > 0 ? `<div class="badges-container">${avisos.join('')}</div>` : ''; let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirVeiculo('${doc.id}', event)"><span class="material-icons">delete</span></button>` : ''; let acaoClick = isUserAdmin ? `onclick="editarVeiculo('${doc.id}')" style="cursor:pointer;"` : ''; lista.innerHTML += `<div class="card-item ${clAlerta}" ${acaoClick}>${boxAv}<h4>${v.modelo} (${v.placa})</h4><p><b>KM Atual: ${v.km_atual}</b></p><p style="font-size:11px; color:#666;">ANTT: ${v.antt?new Date(v.antt).toLocaleDateString('pt-BR'):'-'} | Crono: ${v.crono?new Date(v.crono).toLocaleDateString('pt-BR'):'-'} | IPVA: ${v.ipva?new Date(v.ipva).toLocaleDateString('pt-BR'):'-'}</p>${btnExcluir}</div>`; }); atualizarPainelGlobalDeAlertas(); if(isUserAdmin) carregarDashboard(); });
+        window.editarVeiculo = (id) => { if(!isUserAdmin) return; const v = dbVeiculos[id]; document.getElementById('v-id').value = id; document.getElementById('v-placa').value = v.placa; document.getElementById('v-modelo').value = v.modelo; document.getElementById('v-ano').value = v.ano; document.getElementById('v-km').value = v.km_atual; document.getElementById('v-km-oleo').value = v.km_oleo || ''; document.getElementById('v-antt').value = v.antt || ''; document.getElementById('v-crono').value = v.crono || ''; document.getElementById('v-ipva').value = v.ipva || ''; document.getElementById('v-tipo').value = v.tipo || 'Carro'; document.getElementById('v-combustivel').value = v.combustivel || 'Diesel'; document.getElementById('v-status').value = v.status; window.scrollTo(0,0); };
 
-            snap.forEach(documento => { 
-                const v = documento.data(); dbVeiculos[documento.id] = v;
-                let avisos = []; let clAlerta = v.status;
-                if(v.status === 'ativo') {
-                    if(v.km_pneu) { let dP = v.km_pneu - v.km_atual; if(dP<=0) { avisos.push(`<span class="badge">Pneu Venc.</span>`); clAlerta='alerta'; } else if(dP<=kPneu) { avisos.push(`<span class="badge warning">Pneu Próx.</span>`); } }
-                    if(v.km_oleo) { let dO = v.km_oleo - v.km_atual; if(dO<=0) { avisos.push(`<span class="badge">Óleo Venc.</span>`); clAlerta='alerta'; } else if(dO<=kOleo) { avisos.push(`<span class="badge warning">Óleo Próx.</span>`); } }
-                    const checarD = (dStr, nome) => { if(!dStr) return; let dias = Math.ceil((new Date(dStr) - hoje) / (1000*60*60*24)); if(dias < 0) { avisos.push(`<span class="badge">${nome} Venc.</span>`); clAlerta='alerta'; } else if(dias <= dAlerta) { avisos.push(`<span class="badge warning">${nome} em ${dias}d</span>`); } };
-                    checarD(v.antt, 'ANTT'); checarD(v.crono, 'Crono.'); checarD(v.ipva, 'IPVA');
-                }
-                let boxAv = avisos.length > 0 ? `<div class="badges-container">${avisos.join('')}</div>` : '';
-                let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirVeiculo('${documento.id}', event)"><span class="material-icons">delete</span></button>` : '';
-                let acaoClick = isUserAdmin ? `onclick="editarVeiculo('${documento.id}')" style="cursor:pointer;"` : '';
-                lista.innerHTML += `<div class="card-item ${clAlerta}" ${acaoClick}>${boxAv}<h4>${v.modelo} (${v.placa})</h4><p><b>KM Atual: ${v.km_atual}</b></p><p style="font-size:11px; color:#666;">ANTT: ${v.antt?new Date(v.antt).toLocaleDateString('pt-BR'):'-'} | Crono: ${v.crono?new Date(v.crono).toLocaleDateString('pt-BR'):'-'} | IPVA: ${v.ipva?new Date(v.ipva).toLocaleDateString('pt-BR'):'-'}</p>${btnExcluir}</div>`; 
-            }); 
-            atualizarPainelGlobalDeAlertas(); if(isUserAdmin) carregarDashboard();
-        });
-        window.editarVeiculo = (id) => { if(!isUserAdmin) return; const v = dbVeiculos[id]; document.getElementById('v-id').value = id; document.getElementById('v-placa').value = v.placa; document.getElementById('v-modelo').value = v.modelo; document.getElementById('v-ano').value = v.ano; document.getElementById('v-km').value = v.km_atual; document.getElementById('v-km-pneu').value = v.km_pneu || ''; document.getElementById('v-km-oleo').value = v.km_oleo || ''; document.getElementById('v-antt').value = v.antt || ''; document.getElementById('v-crono').value = v.crono || ''; document.getElementById('v-ipva').value = v.ipva || ''; document.getElementById('v-tipo').value = v.tipo || 'Carro'; document.getElementById('v-combustivel').value = v.combustivel || 'Diesel'; document.getElementById('v-status').value = v.status; window.scrollTo(0,0); };
-
-        document.getElementById('form-motorista').addEventListener('submit', async (e) => { 
-            e.preventDefault(); if(!isUserAdmin) return;
-            const btn = document.getElementById('btn-salvar-mot'); btn.innerText = "A guardar..."; const id = document.getElementById('m-id').value; 
-            let dados = { nome: document.getElementById('m-nome').value, cpf: document.getElementById('m-cpf').value, cnh: document.getElementById('m-cnh').value, cnh_val: document.getElementById('m-cnh-val').value, toxicologico: document.getElementById('m-tox-val').value, telefone: document.getElementById('m-telefone').value, email_acesso: document.getElementById('m-email').value.trim().toLowerCase(), status: document.getElementById('m-status').value, comissao: parseFloat(document.getElementById('m-comissao').value) || 0 }; 
-            if(id) await updateDoc(doc(db, "motoristas", id), dados); else await addDoc(collection(db, "motoristas"), dados); 
-            logAuditoria("Motorista", `Gravado ${dados.nome}`); document.getElementById('form-motorista').reset(); document.getElementById('m-id').value = ''; btn.innerHTML = "<span class='material-icons'>save</span> Salvar Motorista";
-        });
-        onSnapshot(collection(db, "motoristas"), (snap) => { 
-            const lista = document.getElementById('lista-motoristas'); lista.innerHTML = ''; const hoje = new Date(); 
-            const dAlerta = sysConfig.alertaDias || 30;
-
-            snap.forEach(documento => { 
-                const m = documento.data(); dbMotoristas[documento.id] = m;
-                let avisos = []; let clAlerta = m.status;
-                if(m.status === 'ativo') { const checarDataM = (dataStr, nome) => { if(!dataStr) return; let dias = Math.ceil((new Date(dataStr) - hoje) / (1000*60*60*24)); if(dias < 0) { avisos.push(`<span class="badge">${nome} Venc!</span>`); clAlerta = 'alerta'; } else if(dias <= dAlerta) { avisos.push(`<span class="badge warning">${nome} em ${dias}d</span>`); } };
-                    checarDataM(m.toxicologico, 'Toxicológico'); checarDataM(m.cnh_val, 'CNH');
-                }
-                let boxAv = avisos.length > 0 ? `<div class="badges-container">${avisos.join('')}</div>` : '';
-                let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirMotorista('${documento.id}', event)"><span class="material-icons">delete</span></button>` : '';
-                let acaoClick = isUserAdmin ? `onclick="editarMotorista('${documento.id}')" style="cursor:pointer;"` : '';
-                lista.innerHTML += `<div class="card-item ${clAlerta}" ${acaoClick}>${boxAv}<h4>${m.nome}</h4><p>Comissão: ${m.comissao||0}% | Login: ${m.email_acesso||'Não configurado'}</p>${btnExcluir}</div>`; 
-            }); 
-            if(!isUserAdmin && auth.currentUser) { const mEntry = Object.entries(dbMotoristas).find(([id, m]) => m.email_acesso && m.email_acesso === auth.currentUser.email.toLowerCase()); meuMotoristaId = mEntry ? mEntry[0] : null; if(document.getElementById('tela-dashboard').classList.contains('ativa')) carregarDashboard(); }
-            atualizarPainelGlobalDeAlertas(); if(isUserAdmin) carregarDashboard();
-        });
+        document.getElementById('form-motorista').addEventListener('submit', async (e) => { e.preventDefault(); if(!isUserAdmin) return; const btn = document.getElementById('btn-salvar-mot'); btn.innerText = "A guardar..."; const id = document.getElementById('m-id').value; let dados = { nome: document.getElementById('m-nome').value, cpf: document.getElementById('m-cpf').value, cnh: document.getElementById('m-cnh').value, cnh_val: document.getElementById('m-cnh-val').value, toxicologico: document.getElementById('m-tox-val').value, telefone: document.getElementById('m-telefone').value, email_acesso: document.getElementById('m-email').value.trim().toLowerCase(), status: document.getElementById('m-status').value, comissao: parseFloat(document.getElementById('m-comissao').value) || 0 }; const p = id ? updateDoc(doc(db, "motoristas", id), dados) : addDoc(collection(db, "motoristas"), dados); if(navigator.onLine) await p; logAuditoria("Motorista", `Gravado ${dados.nome}`); document.getElementById('form-motorista').reset(); document.getElementById('m-id').value = ''; btn.innerHTML = "<span class='material-icons'>save</span> Salvar Motorista"; });
+        
+        onSnapshot(collection(db, "motoristas"), (snap) => { const lista = document.getElementById('lista-motoristas'); lista.innerHTML = ''; const hoje = new Date(); const dAlerta = sysConfig.alertaDias || 30; snap.forEach(doc => { const m = doc.data(); dbMotoristas[doc.id] = m; let avisos = []; let clAlerta = m.status; if(m.status === 'ativo') { const checarDataM = (dataStr, nome) => { if(!dataStr) return; let dias = Math.ceil((new Date(dataStr) - hoje) / (1000*60*60*24)); if(dias < 0) { avisos.push(`<span class="badge">${nome} Venc!</span>`); clAlerta = 'alerta'; } else if(dias <= dAlerta) { avisos.push(`<span class="badge warning">${nome} em ${dias}d</span>`); } }; checarDataM(m.toxicologico, 'Toxicológico'); checarDataM(m.cnh_val, 'CNH'); } let boxAv = avisos.length > 0 ? `<div class="badges-container">${avisos.join('')}</div>` : ''; let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirMotorista('${doc.id}', event)"><span class="material-icons">delete</span></button>` : ''; let acaoClick = isUserAdmin ? `onclick="editarMotorista('${doc.id}')" style="cursor:pointer;"` : ''; lista.innerHTML += `<div class="card-item ${clAlerta}" ${acaoClick}>${boxAv}<h4>${m.nome}</h4><p>Comissão: ${m.comissao||0}% | Login: ${m.email_acesso||'Não configurado'}</p>${btnExcluir}</div>`; }); if(!isUserAdmin && auth.currentUser) { const mEntry = Object.entries(dbMotoristas).find(([id, m]) => m.email_acesso && m.email_acesso === auth.currentUser.email.toLowerCase()); meuMotoristaId = mEntry ? mEntry[0] : null; if(document.getElementById('tela-dashboard').classList.contains('ativa')) carregarDashboard(); } atualizarPainelGlobalDeAlertas(); if(isUserAdmin) carregarDashboard(); });
         window.editarMotorista = (id) => { if(!isUserAdmin) return; const m = dbMotoristas[id]; document.getElementById('m-id').value = id; document.getElementById('m-nome').value = m.nome; document.getElementById('m-cpf').value = m.cpf || ''; document.getElementById('m-comissao').value = m.comissao || 0; document.getElementById('m-cnh').value = m.cnh; document.getElementById('m-cnh-val').value = m.cnh_val || ''; document.getElementById('m-tox-val').value = m.toxicologico || ''; document.getElementById('m-telefone').value = m.telefone || ''; document.getElementById('m-email').value = m.email_acesso || ''; document.getElementById('m-status').value = m.status; window.scrollTo(0,0); };
 
-        document.getElementById('form-custo-fixo').addEventListener('submit', async (e) => { e.preventDefault(); if(!isUserAdmin) return; const dados = { descricao: document.getElementById('cf-desc').value, categoria: document.getElementById('cf-cat').value, data_pagamento: document.getElementById('cf-data').value, valor: parseFloat(document.getElementById('cf-valor').value) }; await addDoc(collection(db, "custos_fixos"), dados); logAuditoria("Custo Fixo", `Despesa: ${dados.descricao}`); document.getElementById('form-custo-fixo').reset(); document.getElementById('cf-data').value = new Date().toISOString().split('T')[0]; });
+        document.getElementById('form-custo-fixo').addEventListener('submit', async (e) => { e.preventDefault(); if(!isUserAdmin) return; const dados = { descricao: document.getElementById('cf-desc').value, categoria: document.getElementById('cf-cat').value, data_pagamento: document.getElementById('cf-data').value, valor: parseFloat(document.getElementById('cf-valor').value) }; const p = addDoc(collection(db, "custos_fixos"), dados); if(navigator.onLine) await p; logAuditoria("Custo Fixo", `Despesa: ${dados.descricao}`); document.getElementById('form-custo-fixo').reset(); document.getElementById('cf-data').value = new Date().toISOString().split('T')[0]; });
         onSnapshot(collection(db, "custos_fixos"), (snap) => { const lista = document.getElementById('lista-custos-fixos'); lista.innerHTML = ''; dbCustosFixos = {}; let arrayCustos = []; snap.forEach(doc => { const c = doc.data(); dbCustosFixos[doc.id] = c; arrayCustos.push({id: doc.id, ...c}); }); arrayCustos.sort((a,b) => new Date(b.data_pagamento) - new Date(a.data_pagamento)); arrayCustos.forEach(c => { let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirCustoFixo('${c.id}', event)"><span class="material-icons">delete</span></button>` : ''; lista.innerHTML += `<div class="card-item custo-fixo"><h4>${c.descricao}</h4><p><b>Data:</b> ${new Date(c.data_pagamento).toLocaleDateString('pt-BR')} | <b>Cat:</b> ${c.categoria}</p><p style="color:#c62828; font-weight:bold;">Valor: R$ ${c.valor.toFixed(2)}</p>${btnExcluir}</div>`; }); if(isUserAdmin) carregarDashboard(); });
 
-        document.getElementById('man-tipo').addEventListener('change', (e) => {
-            const tipo = e.target.value; const container = document.getElementById('man-alvo-container'); const grpOleo = document.getElementById('grp-man-km-oleo'); const grpPneu = document.getElementById('grp-man-km-pneu');
-            document.getElementById('man-km-oleo').value = ''; document.getElementById('man-km-pneu').value = '';
-            if(tipo === 'Troca de Óleo e Filtros') { container.style.display = 'flex'; grpOleo.style.display = 'block'; grpPneu.style.display = 'none'; } 
-            else if(tipo === 'Troca de Pneus') { container.style.display = 'flex'; grpOleo.style.display = 'none'; grpPneu.style.display = 'block'; } 
-            else { container.style.display = 'none'; grpOleo.style.display = 'none'; grpPneu.style.display = 'none'; }
-        });
-
-        document.getElementById('form-manutencao').addEventListener('submit', async (e) => { 
-            e.preventDefault(); if(!isUserAdmin) return; 
-            const cbVeic = document.getElementById('man-veiculo'); const veiculoId = cbVeic.value; const tipoServico = document.getElementById('man-tipo').value;
-            let dadosManutencao = { veiculo_id: veiculoId, veiculo_nome: cbVeic.options[cbVeic.selectedIndex].text, data_manutencao: document.getElementById('man-data').value, custo: parseFloat(document.getElementById('man-custo').value), tipo: tipoServico, descricao: document.getElementById('man-desc').value }; 
-            await addDoc(collection(db, "manutencoes"), dadosManutencao); 
-            let atualizaVeiculo = {};
-            if(tipoServico === 'Troca de Óleo e Filtros') { let novoOleo = parseFloat(document.getElementById('man-km-oleo').value); if(novoOleo) atualizaVeiculo.km_oleo = novoOleo; } 
-            else if(tipoServico === 'Troca de Pneus') { let novoPneu = parseFloat(document.getElementById('man-km-pneu').value); if(novoPneu) atualizaVeiculo.km_pneu = novoPneu; }
-            if(Object.keys(atualizaVeiculo).length > 0) { await updateDoc(doc(db, "veiculos", veiculoId), atualizaVeiculo); logAuditoria("Oficina + Veículo", `Manutenção e reset KM (${tipoServico})`); } else { logAuditoria("Oficina", `Manutenção: ${tipoServico}`); }
-            document.getElementById('form-manutencao').reset(); document.getElementById('man-tipo').dispatchEvent(new Event('change')); alert("Despesa Registrada com sucesso no histórico!"); 
-        });
-
+        document.getElementById('man-tipo').addEventListener('change', (e) => { const tipo = e.target.value; const container = document.getElementById('man-alvo-container'); const grpOleo = document.getElementById('grp-man-km-oleo'); document.getElementById('man-km-oleo').value = ''; if(tipo === 'Troca de Óleo e Filtros') { container.style.display = 'flex'; grpOleo.style.display = 'block'; } else { container.style.display = 'none'; grpOleo.style.display = 'none'; } });
+        document.getElementById('form-manutencao').addEventListener('submit', async (e) => { e.preventDefault(); if(!isUserAdmin) return; const cbVeic = document.getElementById('man-veiculo'); const veiculoId = cbVeic.value; const tipoServico = document.getElementById('man-tipo').value; let dadosManutencao = { veiculo_id: veiculoId, veiculo_nome: cbVeic.options[cbVeic.selectedIndex].text, data_manutencao: document.getElementById('man-data').value, custo: parseFloat(document.getElementById('man-custo').value), tipo: tipoServico, descricao: document.getElementById('man-desc').value }; const p1 = addDoc(collection(db, "manutencoes"), dadosManutencao); let atualizaVeiculo = {}; if(tipoServico === 'Troca de Óleo e Filtros') { let novoOleo = parseFloat(document.getElementById('man-km-oleo').value); if(novoOleo) atualizaVeiculo.km_oleo = novoOleo; } let p2 = null; if(Object.keys(atualizaVeiculo).length > 0) { p2 = updateDoc(doc(db, "veiculos", veiculoId), atualizaVeiculo); logAuditoria("Oficina + Veículo", `Manutenção e reset KM (${tipoServico})`); } else { logAuditoria("Oficina", `Manutenção: ${tipoServico}`); } if(navigator.onLine) { await p1; if(p2) await p2; } document.getElementById('form-manutencao').reset(); document.getElementById('man-tipo').dispatchEvent(new Event('change')); alert("Despesa Registrada no Histórico!"); });
         onSnapshot(collection(db, "manutencoes"), (snap) => { const lista = document.getElementById('lista-manutencoes'); lista.innerHTML = ''; dbManutencoes = {}; let manutArray = []; snap.forEach(doc => { const m = doc.data(); dbManutencoes[doc.id] = m; manutArray.push({id: doc.id, ...m}); }); manutArray.sort((a, b) => new Date(b.data_manutencao) - new Date(a.data_manutencao)); manutArray.forEach(m => { let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirManutencao('${m.id}', event)"><span class="material-icons">delete</span></button>` : ''; lista.innerHTML += `<div class="card-item manutencao"><h4>${m.veiculo_nome} - Oficina</h4><p>Data: ${new Date(m.data_manutencao).toLocaleDateString('pt-BR')} | Custo: R$ ${m.custo.toFixed(2)}</p><p style="color:#666;"><b>${m.tipo}</b> - ${m.descricao}</p>${btnExcluir}</div>`; }); if(isUserAdmin) carregarDashboard(); });
 
-        async function carregarDropdownsViagem() { 
-            const viVeic = document.getElementById('vi-veiculo'); const viMot = document.getElementById('vi-motorista'); 
-            viVeic.innerHTML = ''; viMot.innerHTML = ''; 
-            for(let id in dbVeiculos) { if(dbVeiculos[id].status === 'ativo') viVeic.innerHTML += `<option value="${id}">${dbVeiculos[id].placa}</option>`; }
-            if(!isUserAdmin && meuMotoristaId) { viMot.innerHTML = `<option value="${meuMotoristaId}">${dbMotoristas[meuMotoristaId].nome}</option>`; } 
-            else { for(let id in dbMotoristas) { if(dbMotoristas[id].status === 'ativo') viMot.innerHTML += `<option value="${id}">${dbMotoristas[id].nome}</option>`; } }
-        }
+        async function carregarDropdownsViagem() { const viVeic = document.getElementById('vi-veiculo'); const viMot = document.getElementById('vi-motorista'); viVeic.innerHTML = ''; viMot.innerHTML = ''; for(let id in dbVeiculos) { if(dbVeiculos[id].status === 'ativo') viVeic.innerHTML += `<option value="${id}">${dbVeiculos[id].placa}</option>`; } if(!isUserAdmin && meuMotoristaId) { viMot.innerHTML = `<option value="${meuMotoristaId}">${dbMotoristas[meuMotoristaId].nome}</option>`; } else { for(let id in dbMotoristas) { if(dbMotoristas[id].status === 'ativo') viMot.innerHTML += `<option value="${id}">${dbMotoristas[id].nome}</option>`; } } }
         document.getElementById('vi-veiculo').addEventListener('change', (e) => { const vId = e.target.value; document.getElementById('vi-km-ini').value = vId ? dbVeiculos[vId].km_atual : ''; });
         
-        document.getElementById('form-viagem').addEventListener('submit', async (e) => { 
-            e.preventDefault(); const kmIni = parseFloat(document.getElementById('vi-km-ini').value);
-            if(!kmIni || kmIni <= 0) { alert("ATENÇÃO: KM inicial inválido. Verifique o cadastro do veículo."); return; }
-            const cbVeic = document.getElementById('vi-veiculo'); const cbMot = document.getElementById('vi-motorista'); 
-            const adiantamento = parseFloat(document.getElementById('vi-adiantamento').value) || 0;
-            let dados = { veiculo_id: cbVeic.value, veiculo_nome: cbVeic.options[cbVeic.selectedIndex].text, motorista_id: cbMot.value, motorista_nome: cbMot.options[cbMot.selectedIndex].text, perc_comissao: dbMotoristas[cbMot.value].comissao||0, data_saida: document.getElementById('vi-data-saida').value, km_inicial: kmIni, contratante: document.getElementById('vi-contratante').value, valor_frete: parseFloat(document.getElementById('vi-valor-frete').value), destino: document.getElementById('vi-destino').value, finalidade: document.getElementById('vi-finalidade').value, status: 'em_curso' }; 
-            await addDoc(collection(db, "viagens"), dados); logAuditoria("Viagem Aberta", dados.destino); 
-            if (adiantamento > 0) { await addDoc(collection(db, "pagamentos_motoristas"), { motorista_id: cbMot.value, motorista_nome: cbMot.options[cbMot.selectedIndex].text, data_pagamento: document.getElementById('vi-data-saida').value.split('T')[0], valor: adiantamento, descricao: `Adiantamento Saída - Destino: ${dados.destino}` }); logAuditoria("Adiantamento Auto", `R$ ${adiantamento}`); }
-            document.getElementById('form-viagem').reset(); document.getElementById('vi-adiantamento').value = '0.00'; carregarDropdownsViagem();
-        });
+        document.getElementById('form-viagem').addEventListener('submit', async (e) => { e.preventDefault(); const kmIni = parseFloat(document.getElementById('vi-km-ini').value); if(!kmIni || kmIni <= 0) { alert("ATENÇÃO: KM inicial inválido. Verifique o cadastro do veículo."); return; } const cbVeic = document.getElementById('vi-veiculo'); const cbMot = document.getElementById('vi-motorista'); const adiantamento = parseFloat(document.getElementById('vi-adiantamento').value) || 0; let dados = { veiculo_id: cbVeic.value, veiculo_nome: cbVeic.options[cbVeic.selectedIndex].text, motorista_id: cbMot.value, motorista_nome: cbMot.options[cbMot.selectedIndex].text, perc_comissao: dbMotoristas[cbMot.value].comissao||0, data_saida: document.getElementById('vi-data-saida').value, km_inicial: kmIni, contratante: document.getElementById('vi-contratante').value, valor_frete: parseFloat(document.getElementById('vi-valor-frete').value), destino: document.getElementById('vi-destino').value, finalidade: document.getElementById('vi-finalidade').value, status: 'em_curso' }; const p1 = addDoc(collection(db, "viagens"), dados); let p2 = null; if (adiantamento > 0) { p2 = addDoc(collection(db, "pagamentos_motoristas"), { motorista_id: cbMot.value, motorista_nome: cbMot.options[cbMot.selectedIndex].text, data_pagamento: document.getElementById('vi-data-saida').value.split('T')[0], valor: adiantamento, descricao: `Adiantamento Saída - Destino: ${dados.destino}` }); } if(navigator.onLine) { await p1; if(p2) await p2; } logAuditoria("Viagem Aberta", dados.destino); document.getElementById('form-viagem').reset(); document.getElementById('vi-adiantamento').value = '0.00'; carregarDropdownsViagem(); });
         
-        onSnapshot(collection(db, "viagens"), (snap) => { 
-            const lista = document.getElementById('lista-viagens'); lista.innerHTML = ''; dbViagens = {}; let viagensArray = [];
-            snap.forEach(documento => { const v = documento.data(); dbViagens[documento.id] = v; viagensArray.push({ id: documento.id, ...v }); });
-            viagensArray.sort((a, b) => new Date(b.data_saida) - new Date(a.data_saida));
-            viagensArray.forEach(v => {
-                if(!isUserAdmin && v.motorista_id !== meuMotoristaId) return;
-                let dataS = v.data_saida ? new Date(v.data_saida).toLocaleString('pt-BR') : ''; let btnFechar = v.status === 'em_curso' ? `<button onclick="abrirModalRetorno('${v.id}')" class="btn-submit" style="background:#2e7d32; margin-top:10px;">📍 Fechar Viagem</button>` : ''; let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirViagem('${v.id}', event)"><span class="material-icons">delete</span></button>` : '';
-                let infoLucro = '';
-                if(v.status === 'concluida'){
-                    let baseInfo = `<p><b>Média:</b> ${(v.media_kml||0).toFixed(1)} km/l</p>`;
-                    if(isUserAdmin) { infoLucro = `<div style="margin-top:8px; padding:8px; background:#f5f5f5; border-radius:4px;">${baseInfo}<p><b>Comissão Acumulada:</b> R$ ${(v.valor_comissao||0).toFixed(2)}</p><p class="${(v.lucro_liquido||0)>=0?'lucro-positivo':'lucro-negativo'}"><b>Lucro Líquido: R$ ${(v.lucro_liquido||0).toFixed(2)}</b></p></div>`; }
-                    else { infoLucro = `<div style="margin-top:8px; padding:8px; background:#f5f5f5; border-radius:4px;">${baseInfo}<p>🏁 Concluída</p></div>`; }
-                }
-                lista.innerHTML += `<div class="card-item ${v.status.replace('_','-')}"><h4>${v.contratante||''} - ${v.destino}</h4><p>V: ${v.veiculo_nome} | M: ${v.motorista_nome}</p><p>Saída: ${dataS}</p>${btnFechar}${infoLucro}${btnExcluir}</div>`; 
-            }); 
-            if(document.getElementById('tela-dashboard').classList.contains('ativa')) carregarDashboard();
-        });
+        onSnapshot(collection(db, "viagens"), (snap) => { const lista = document.getElementById('lista-viagens'); lista.innerHTML = ''; dbViagens = {}; let viagensArray = []; snap.forEach(doc => { const v = doc.data(); dbViagens[doc.id] = v; viagensArray.push({ id: doc.id, ...v }); }); viagensArray.sort((a, b) => new Date(b.data_saida) - new Date(a.data_saida)); viagensArray.forEach(v => { if(!isUserAdmin && v.motorista_id !== meuMotoristaId) return; let dataS = v.data_saida ? new Date(v.data_saida).toLocaleString('pt-BR') : ''; let btnFechar = v.status === 'em_curso' ? `<button onclick="abrirModalRetorno('${v.id}')" class="btn-submit" style="background:#2e7d32; margin-top:10px;">📍 Fechar Viagem</button>` : ''; let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirViagem('${v.id}', event)"><span class="material-icons">delete</span></button>` : ''; let infoLucro = ''; if(v.status === 'concluida'){ let baseInfo = `<p><b>Média:</b> ${(v.media_kml||0).toFixed(1)} km/l</p>`; if(isUserAdmin) { infoLucro = `<div style="margin-top:8px; padding:8px; background:#f5f5f5; border-radius:4px;">${baseInfo}<p><b>Comissão Acumulada:</b> R$ ${(v.valor_comissao||0).toFixed(2)}</p><p class="${(v.lucro_liquido||0)>=0?'lucro-positivo':'lucro-negativo'}"><b>Lucro Líquido: R$ ${(v.lucro_liquido||0).toFixed(2)}</b></p></div>`; } else { infoLucro = `<div style="margin-top:8px; padding:8px; background:#f5f5f5; border-radius:4px;">${baseInfo}<p>🏁 Concluída</p></div>`; } } lista.innerHTML += `<div class="card-item ${v.status.replace('_','-')}"><h4>${v.contratante||''} - ${v.destino}</h4><p>V: ${v.veiculo_nome} | M: ${v.motorista_nome}</p><p>Saída: ${dataS}</p>${btnFechar}${infoLucro}${btnExcluir}</div>`; }); if(document.getElementById('tela-dashboard').classList.contains('ativa')) carregarDashboard(); });
 
-        window.abrirModalRetorno = (id) => {
-            const v = dbViagens[id]; document.getElementById('mod-viagem-id').value = id; document.getElementById('modal-titulo').innerText = `🏁 Retorno: ${v.veiculo_nome}`;
-            document.getElementById('mod-km-fim').value = ''; document.getElementById('mod-km-fim').style.borderColor = '#ccc'; document.getElementById('aviso-km-invalido').style.display = 'none'; document.getElementById('span-km-saida').innerText = v.km_inicial;
-            const btnCalc = document.getElementById('btn-calcular-resumo'); btnCalc.disabled = false; btnCalc.style.background = '#2e7d32';
-            document.getElementById('mod-litros').value = '0.00'; document.getElementById('mod-custo-combustivel').value = '0.00'; document.getElementById('mod-custo-pedagio').value = '0.00';
-            const agora = new Date(); agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset()); document.getElementById('mod-data-retorno').value = agora.toISOString().slice(0, 16);
-            document.getElementById('modal-step-1').style.display = 'block'; document.getElementById('modal-step-2').style.display = 'none'; document.getElementById('modal-retorno').classList.add('open');
-        };
+        window.abrirModalRetorno = (id) => { const v = dbViagens[id]; document.getElementById('mod-viagem-id').value = id; document.getElementById('modal-titulo').innerText = `🏁 Retorno: ${v.veiculo_nome}`; document.getElementById('mod-km-fim').value = ''; document.getElementById('mod-km-fim').style.borderColor = '#ccc'; document.getElementById('aviso-km-invalido').style.display = 'none'; document.getElementById('span-km-saida').innerText = v.km_inicial; const btnCalc = document.getElementById('btn-calcular-resumo'); btnCalc.disabled = false; btnCalc.style.background = '#2e7d32'; document.getElementById('mod-litros').value = '0.00'; document.getElementById('mod-custo-combustivel').value = '0.00'; document.getElementById('mod-custo-pedagio').value = '0.00'; const agora = new Date(); agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset()); document.getElementById('mod-data-retorno').value = agora.toISOString().slice(0, 16); document.getElementById('modal-step-1').style.display = 'block'; document.getElementById('modal-step-2').style.display = 'none'; document.getElementById('modal-retorno').classList.add('open'); };
         window.fecharModalRetorno = () => { document.getElementById('modal-retorno').classList.remove('open'); };
         window.voltarParaGastos = () => { document.getElementById('modal-step-1').style.display = 'block'; document.getElementById('modal-step-2').style.display = 'none'; };
 
-        document.getElementById('mod-km-fim').addEventListener('input', (e) => {
-            const kmDigitado = parseFloat(e.target.value); const id = document.getElementById('mod-viagem-id').value; const v = dbViagens[id];
-            const btnCalc = document.getElementById('btn-calcular-resumo'); const aviso = document.getElementById('aviso-km-invalido');
-            if(kmDigitado && kmDigitado <= v.km_inicial) { aviso.style.display = 'block'; btnCalc.disabled = true; e.target.style.borderColor = '#c62828'; } 
-            else { aviso.style.display = 'none'; btnCalc.disabled = false; btnCalc.style.background = '#2e7d32'; e.target.style.borderColor = '#ccc'; }
-        });
+        document.getElementById('mod-km-fim').addEventListener('input', (e) => { const kmDigitado = parseFloat(e.target.value); const id = document.getElementById('mod-viagem-id').value; const v = dbViagens[id]; const btnCalc = document.getElementById('btn-calcular-resumo'); const aviso = document.getElementById('aviso-km-invalido'); if(kmDigitado && kmDigitado <= v.km_inicial) { aviso.style.display = 'block'; btnCalc.disabled = true; e.target.style.borderColor = '#c62828'; } else { aviso.style.display = 'none'; btnCalc.disabled = false; btnCalc.style.background = '#2e7d32'; e.target.style.borderColor = '#ccc'; } });
 
         let resumoTemp = {};
-        window.gerarResumoViagem = () => {
-            const id = document.getElementById('mod-viagem-id').value; const v = dbViagens[id]; const kmFim = parseFloat(document.getElementById('mod-km-fim').value);
-            if (!kmFim || kmFim <= v.km_inicial) { alert(`ALERTA DE SEGURANÇA: KM Final inválido.`); return; }
-            const dist = kmFim - v.km_inicial; const litros = parseFloat(document.getElementById('mod-litros').value) || 0; const mediaKml = litros > 0 ? (dist / litros) : 0;
-            const comb = parseFloat(document.getElementById('mod-custo-combustivel').value) || 0; const peda = parseFloat(document.getElementById('mod-custo-pedagio').value) || 0;
-            let frete = v.valor_frete || 0; const valorComissao = frete * ((v.perc_comissao||0) / 100);
-            const totalCustos = comb + peda + valorComissao; const lucro = frete - totalCustos;
-            resumoTemp = { data_retorno: document.getElementById('mod-data-retorno').value, km_final: kmFim, distancia: dist, litros: litros, media_kml: mediaKml, valor_comissao: valorComissao, total_custos: totalCustos, lucro_liquido: lucro, status: 'concluida', veiculo_id: v.veiculo_id };
-            if(isUserAdmin) { document.getElementById('caixa-resumo').innerHTML = `<div class="resumo-linha"><span>Distância Percorrida:</span> <b>${dist} km</b></div><div class="resumo-linha"><span>Média Veículo:</span> <b>${mediaKml.toFixed(1)} km/l</b></div><div class="resumo-linha"><span>Receita Frete:</span> <b>R$ ${frete.toFixed(2)}</b></div><div class="resumo-linha" style="color:#c62828;"><span>(-) Total Custos:</span> <b>R$ ${totalCustos.toFixed(2)}</b></div><div class="resumo-total"><span>Lucro da Viagem:</span> <span class="${lucro>=0?'lucro-positivo':'lucro-negativo'}">R$ ${lucro.toFixed(2)}</span></div>`; } 
-            else { document.getElementById('caixa-resumo').innerHTML = `<div class="resumo-linha"><span>Distância Percorrida:</span> <b>${dist} km</b></div><div class="resumo-linha"><span>Média Veículo:</span> <b>${mediaKml.toFixed(1)} km/l</b></div><p style="text-align:center; color:#2e7d32; font-weight:bold; margin-top:10px;">Resumo calculado. Pronto para fechar!</p>`; }
-            document.getElementById('modal-step-1').style.display = 'none'; document.getElementById('modal-step-2').style.display = 'block';
-        };
+        window.gerarResumoViagem = () => { const id = document.getElementById('mod-viagem-id').value; const v = dbViagens[id]; const kmFim = parseFloat(document.getElementById('mod-km-fim').value); if (!kmFim || kmFim <= v.km_inicial) { alert(`ALERTA DE SEGURANÇA: KM Final inválido.`); return; } const dist = kmFim - v.km_inicial; const litros = parseFloat(document.getElementById('mod-litros').value) || 0; const mediaKml = litros > 0 ? (dist / litros) : 0; const comb = parseFloat(document.getElementById('mod-custo-combustivel').value) || 0; const peda = parseFloat(document.getElementById('mod-custo-pedagio').value) || 0; let frete = v.valor_frete || 0; const valorComissao = frete * ((v.perc_comissao||0) / 100); const totalCustos = comb + peda + valorComissao; const lucro = frete - totalCustos; resumoTemp = { data_retorno: document.getElementById('mod-data-retorno').value, km_final: kmFim, distancia: dist, litros: litros, media_kml: mediaKml, valor_comissao: valorComissao, total_custos: totalCustos, lucro_liquido: lucro, status: 'concluida', veiculo_id: v.veiculo_id }; if(isUserAdmin) { document.getElementById('caixa-resumo').innerHTML = `<div class="resumo-linha"><span>Distância Percorrida:</span> <b>${dist} km</b></div><div class="resumo-linha"><span>Média Veículo:</span> <b>${mediaKml.toFixed(1)} km/l</b></div><div class="resumo-linha"><span>Receita Frete:</span> <b>R$ ${frete.toFixed(2)}</b></div><div class="resumo-linha" style="color:#c62828;"><span>(-) Total Custos:</span> <b>R$ ${totalCustos.toFixed(2)}</b></div><div class="resumo-total"><span>Lucro da Viagem:</span> <span class="${lucro>=0?'lucro-positivo':'lucro-negativo'}">R$ ${lucro.toFixed(2)}</span></div>`; } else { document.getElementById('caixa-resumo').innerHTML = `<div class="resumo-linha"><span>Distância Percorrida:</span> <b>${dist} km</b></div><div class="resumo-linha"><span>Média Veículo:</span> <b>${mediaKml.toFixed(1)} km/l</b></div><p style="text-align:center; color:#2e7d32; font-weight:bold; margin-top:10px;">Resumo calculado. Pronto para fechar!</p>`; } document.getElementById('modal-step-1').style.display = 'none'; document.getElementById('modal-step-2').style.display = 'block'; };
 
-        window.confirmarSalvarViagem = async () => {
-            const btn = document.getElementById('btn-confirmar-final'); btn.innerText = "Salvando... aguarde."; btn.disabled = true; btn.style.background = "#9e9e9e";
-            const id = document.getElementById('mod-viagem-id').value; const v = dbViagens[id]; let updateData = { ...resumoTemp };
-            try {
-                await updateDoc(doc(db, "viagens", id), updateData); await updateDoc(doc(db, "veiculos", resumoTemp.veiculo_id), { km_atual: resumoTemp.km_final }); logAuditoria("Fechamento", `Viagem ${id} fechada`); 
-                
-                const meuNumero = sysConfig.whatsapp || "5587999490128"; 
-                const textoZap = window.encodeURIComponent(`*RELATÓRIO DE VIAGEM - Jb Transportes*\n\n*Status:* 🏁 Concluída\n*Motorista:* ${v.motorista_nome}\n*Veículo:* ${v.veiculo_nome}\n*KM Final:* ${resumoTemp.km_final} km\n*Distância:* ${resumoTemp.distancia} km\n*Média:* ${resumoTemp.media_kml.toFixed(1)} km/l\n\n_Motorista: Por favor, anexe a foto do canhoto/painel abaixo._`);
-                const linkZap = `https://wa.me/${meuNumero}?text=${textoZap}`;
-                
-                document.getElementById('modal-step-2').innerHTML = `<div style="text-align:center; padding: 20px;"><span class="material-icons" style="font-size:60px; color:#2e7d32;">check_circle</span><h2 style="margin:10px 0;">Viagem Salva!</h2><p style="color:#666; margin-bottom:20px;">Os dados já estão seguros no sistema.</p><a href="${linkZap}" target="_blank" class="btn-submit" style="background:#25D366; color:white; display:flex; gap:10px;"><span class="material-icons">photo_camera</span> ENVIAR FOTO (WHATSAPP)</a><button onclick="window.location.reload()" class="btn-submit" style="background:#757575; margin-top:10px;">Fechar Janela</button></div>`;
-            } catch(e) { alert("Erro ao fechar viagem."); btn.innerText = "Confirmar e Salvar"; btn.disabled = false; btn.style.background = "#1a237e"; }
-        };
+        window.confirmarSalvarViagem = async () => { const btn = document.getElementById('btn-confirmar-final'); btn.innerText = "Salvando..."; btn.disabled = true; btn.style.background = "#9e9e9e"; const id = document.getElementById('mod-viagem-id').value; const v = dbViagens[id]; let updateData = { ...resumoTemp }; try { const p1 = updateDoc(doc(db, "viagens", id), updateData); const p2 = updateDoc(doc(db, "veiculos", resumoTemp.veiculo_id), { km_atual: resumoTemp.km_final }); if(navigator.onLine) { await Promise.all([p1, p2]); } logAuditoria("Fechamento", `Viagem ${id} fechada`); let isOffline = !navigator.onLine; let msgStatus = isOffline ? "<b style='color:#f57c00;'>Modo Offline:</b> A viagem foi salva no celular e será enviada à matriz assim que houver sinal de internet." : "Os dados já estão seguros no sistema."; let corIcone = isOffline ? "#f57c00" : "#2e7d32"; let iconName = isOffline ? "cloud_off" : "check_circle"; const meuNumero = sysConfig.whatsapp || "5587999490128"; const textoZap = window.encodeURIComponent(`*RELATÓRIO DE VIAGEM - Jb Transportes*\n\n*Status:* 🏁 Concluída\n*Motorista:* ${v.motorista_nome}\n*Veículo:* ${v.veiculo_nome}\n*KM Final:* ${resumoTemp.km_final} km\n*Distância:* ${resumoTemp.distancia} km\n*Média:* ${resumoTemp.media_kml.toFixed(1)} km/l\n\n_Motorista: Por favor, envie a foto do canhoto/painel por aqui._`); const linkZap = `https://wa.me/${meuNumero}?text=${textoZap}`; document.getElementById('modal-step-2').innerHTML = ` <div style="text-align:center; padding: 20px;"> <span class="material-icons" style="font-size:60px; color:${corIcone};">${iconName}</span> <h2 style="margin:10px 0;">Viagem Salva!</h2> <p style="color:#666; margin-bottom:20px; font-size: 13px;">${msgStatus}</p> <a href="${linkZap}" target="_blank" class="btn-submit" style="background:#25D366; color:white; display:flex; gap:10px;"><span class="material-icons">whatsapp</span> ENVIAR FOTO DO CANHOTO</a> <button onclick="window.location.reload()" class="btn-submit" style="background:#757575; margin-top:10px;">Fechar Janela</button> </div>`; } catch(e) { alert("Erro grave ao tentar fechar viagem localmente."); btn.innerText = "Confirmar e Salvar"; btn.disabled = false; btn.style.background = "#1a237e"; } };
 
-        function carregarFiltrosRelatorio() {
-            const hoje = new Date(); const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-            document.getElementById('filtro-data-ini').value = primeiroDia.toISOString().split('T')[0]; document.getElementById('filtro-data-fim').value = hoje.toISOString().split('T')[0];
-            const selVeic = document.getElementById('filtro-veiculo'); selVeic.innerHTML = '<option value="todos">Todos os Veículos</option>';
-            for(let id in dbVeiculos) { selVeic.innerHTML += `<option value="${id}">${dbVeiculos[id].placa} - ${dbVeiculos[id].modelo}</option>`; }
-            const selMot = document.getElementById('filtro-motorista'); selMot.innerHTML = '<option value="todos">Todos os Motoristas</option>';
-            for(let id in dbMotoristas) { selMot.innerHTML += `<option value="${id}">${dbMotoristas[id].nome}</option>`; }
-        }
+        function carregarFiltrosRelatorio() { const hoje = new Date(); const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1); document.getElementById('filtro-data-ini').value = primeiroDia.toISOString().split('T')[0]; document.getElementById('filtro-data-fim').value = hoje.toISOString().split('T')[0]; const selVeic = document.getElementById('filtro-veiculo'); selVeic.innerHTML = '<option value="todos">Todos os Veículos</option>'; for(let id in dbVeiculos) { selVeic.innerHTML += `<option value="${id}">${dbVeiculos[id].placa} - ${dbVeiculos[id].modelo}</option>`; } const selMot = document.getElementById('filtro-motorista'); selMot.innerHTML = '<option value="todos">Todos os Motoristas</option>'; for(let id in dbMotoristas) { selMot.innerHTML += `<option value="${id}">${dbMotoristas[id].nome}</option>`; } }
+        document.getElementById('form-filtro-relatorio').addEventListener('submit', (e) => { e.preventDefault(); const dIni = new Date(document.getElementById('filtro-data-ini').value + "T00:00:00"); const dFim = new Date(document.getElementById('filtro-data-fim').value + "T23:59:59"); const statusFilter = document.getElementById('filtro-status').value; const veicFilter = document.getElementById('filtro-veiculo').value; const motFilter = document.getElementById('filtro-motorista').value; const textFilter = document.getElementById('filtro-texto').value.toLowerCase(); let sumKm = 0; let sumFrete = 0; let sumCusto = 0; let sumLucro = 0; const corpoTabela = document.querySelector('#tabela-relatorio tbody'); corpoTabela.innerHTML = ''; dadosFiltradosGlobais = []; Object.values(dbViagens).forEach(v => { if(!v.data_saida) return; const dViagem = new Date(v.data_saida); if(dViagem >= dIni && dViagem <= dFim) { if(statusFilter === 'todos' || v.status === statusFilter) { if(veicFilter === 'todos' || v.veiculo_id === veicFilter) { if(motFilter === 'todos' || v.motorista_id === motFilter) { let checkTexto = (v.destino || '').toLowerCase() + " " + (v.contratante || '').toLowerCase(); if(textFilter === '' || checkTexto.includes(textFilter)) { let dist = v.distancia || 0; let frete = v.valor_frete || 0; let custo = v.total_custos || 0; let lucro = v.lucro_liquido || 0; if(v.status === 'concluida') { sumKm += dist; sumFrete += frete; sumCusto += custo; sumLucro += lucro; } let dataStr = dViagem.toLocaleDateString('pt-BR'); dadosFiltradosGlobais.push({ data: dataStr, veiculo: v.veiculo_nome, motorista: v.motorista_nome, cliente: v.contratante, km: dist, media: (v.media_kml||0), comissao: (v.valor_comissao||0), lucro: lucro }); let corL = lucro >= 0 ? '#2e7d32' : '#c62828'; corpoTabela.innerHTML += `<tr><td>${dataStr}</td><td>${v.veiculo_nome}</td><td>${v.motorista_nome}</td><td>${v.contratante||''} - ${v.destino}</td><td>${dist} km</td><td>${(v.media_kml||0).toFixed(1)}</td><td>R$ ${(v.valor_comissao||0).toFixed(2)}</td><td style="color:${corL}; font-weight:bold;">R$ ${lucro.toFixed(2)}</td></tr>`; } } } } } }); let margemBI = sumFrete > 0 ? (sumLucro / sumFrete) * 100 : 0; let corMargem = margemBI >= 15 ? '#2e7d32' : (margemBI >= 0 ? '#f57c00' : '#c62828'); let bgMargem = margemBI >= 15 ? '#e8f5e9' : (margemBI >= 0 ? '#fff3e0' : '#ffebee'); document.getElementById('rel-total-km').innerText = sumKm + " km"; document.getElementById('rel-total-frete').innerText = "R$ " + sumFrete.toLocaleString('pt-BR', {minimumFractionDigits: 2}); document.getElementById('rel-total-custo').innerText = "R$ " + sumCusto.toLocaleString('pt-BR', {minimumFractionDigits: 2}); document.getElementById('rel-total-lucro').innerHTML = `R$ ${sumLucro.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <div style="font-size:12px; background:${bgMargem}; color:${corMargem}; padding:2px 8px; border-radius:12px; display:inline-block; margin-top:5px;">${margemBI.toFixed(1).replace('.',',')}% Margem</div>`; document.getElementById('area-resultado-relatorio').style.display = 'block'; });
+        window.exportarExcel = () => { if(dadosFiltradosGlobais.length === 0) return; let csvContent = "Data Saida;Veiculo;Motorista;Cliente;KM;Media (km/l);Comissao;Lucro Viagem\n"; dadosFiltradosGlobais.forEach(row => { csvContent += `${row.data};${row.veiculo};${row.motorista};${row.cliente};${row.km};${row.media.toFixed(1).replace('.',',')};${row.comissao.toFixed(2).replace('.',',')};${row.lucro.toFixed(2).replace('.',',')}\n`; }); const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "BI_JbTransportes_Financeiro.csv"; document.body.appendChild(link); link.click(); document.body.removeChild(link); };
         
-        document.getElementById('form-filtro-relatorio').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const dIni = new Date(document.getElementById('filtro-data-ini').value + "T00:00:00"); const dFim = new Date(document.getElementById('filtro-data-fim').value + "T23:59:59");
-            const statusFilter = document.getElementById('filtro-status').value; const veicFilter = document.getElementById('filtro-veiculo').value;
-            const motFilter = document.getElementById('filtro-motorista').value; const textFilter = document.getElementById('filtro-texto').value.toLowerCase();
-            let sumKm = 0; let sumFrete = 0; let sumCusto = 0; let sumLucro = 0; const corpoTabela = document.querySelector('#tabela-relatorio tbody');
-            corpoTabela.innerHTML = ''; dadosFiltradosGlobais = [];
-            Object.values(dbViagens).forEach(v => {
-                if(!v.data_saida) return; const dViagem = new Date(v.data_saida);
-                if(dViagem >= dIni && dViagem <= dFim) {
-                    if(statusFilter === 'todos' || v.status === statusFilter) {
-                        if(veicFilter === 'todos' || v.veiculo_id === veicFilter) {
-                            if(motFilter === 'todos' || v.motorista_id === motFilter) {
-                                let checkTexto = (v.destino || '').toLowerCase() + " " + (v.contratante || '').toLowerCase();
-                                if(textFilter === '' || checkTexto.includes(textFilter)) {
-                                    let dist = v.distancia || 0; let frete = v.valor_frete || 0; let custo = v.total_custos || 0; let lucro = v.lucro_liquido || 0;
-                                    if(v.status === 'concluida') { sumKm += dist; sumFrete += frete; sumCusto += custo; sumLucro += lucro; }
-                                    let dataStr = dViagem.toLocaleDateString('pt-BR');
-                                    dadosFiltradosGlobais.push({ data: dataStr, veiculo: v.veiculo_nome, motorista: v.motorista_nome, cliente: v.contratante, km: dist, media: (v.media_kml||0), comissao: (v.valor_comissao||0), lucro: lucro });
-                                    let corL = lucro >= 0 ? '#2e7d32' : '#c62828';
-                                    corpoTabela.innerHTML += `<tr><td>${dataStr}</td><td>${v.veiculo_nome}</td><td>${v.motorista_nome}</td><td>${v.contratante||''} - ${v.destino}</td><td>${dist} km</td><td>${(v.media_kml||0).toFixed(1)}</td><td>R$ ${(v.valor_comissao||0).toFixed(2)}</td><td style="color:${corL}; font-weight:bold;">R$ ${lucro.toFixed(2)}</td></tr>`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-            
-            let margemBI = sumFrete > 0 ? (sumLucro / sumFrete) * 100 : 0;
-            let corMargem = margemBI >= 15 ? '#2e7d32' : (margemBI >= 0 ? '#f57c00' : '#c62828');
-            let bgMargem = margemBI >= 15 ? '#e8f5e9' : (margemBI >= 0 ? '#fff3e0' : '#ffebee');
-
-            document.getElementById('rel-total-km').innerText = sumKm + " km"; 
-            document.getElementById('rel-total-frete').innerText = "R$ " + sumFrete.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            document.getElementById('rel-total-custo').innerText = "R$ " + sumCusto.toLocaleString('pt-BR', {minimumFractionDigits: 2}); 
-            
-            document.getElementById('rel-total-lucro').innerHTML = `R$ ${sumLucro.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <div style="font-size:12px; background:${bgMargem}; color:${corMargem}; padding:2px 8px; border-radius:12px; display:inline-block; margin-top:5px;">${margemBI.toFixed(1).replace('.',',')}% Margem</div>`;
-            
-            document.getElementById('area-resultado-relatorio').style.display = 'block';
-        });
-
-        window.exportarExcel = () => {
-            if(dadosFiltradosGlobais.length === 0) return;
-            let csvContent = "Data Saida;Veiculo;Motorista;Cliente;KM;Media (km/l);Comissao;Lucro Viagem\n";
-            dadosFiltradosGlobais.forEach(row => { csvContent += `${row.data};${row.veiculo};${row.motorista};${row.cliente};${row.km};${row.media.toFixed(1).replace('.',',')};${row.comissao.toFixed(2).replace('.',',')};${row.lucro.toFixed(2).replace('.',',')}\n`; });
-            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "BI_JbTransportes_Financeiro.csv";
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        };
-        
-        // Ativa o registro do PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => console.log('PWA OK')).catch(err => console.error('PWA Erro', err));
-            });
-        }
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').then(reg => console.log('PWA OK')).catch(err => console.error('PWA Erro', err)); }); }
     </script>
 </body>
 </html>
