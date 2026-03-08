@@ -109,13 +109,56 @@
 
         /* ===== IMPRESSÃO ===== */
         @media print {
-            body { background: white; }
-            .sidebar, .mobile-header, .btn-submit, form, .no-print, .badges-container, .btn-delete { display: none !important; }
-            .app-container, .main-content { margin: 0; padding: 0; width: 100%; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body { background: white !important; font-size: 11pt; }
+
+            /* Esconde tudo exceto o relatório ativo */
+            .sidebar, .mobile-header, .no-print, .badges-container, .btn-delete,
+            #tela-login, form.no-print { display: none !important; }
+            .app-container, .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
             .tela { display: none !important; }
             .tela.ativa { display: block !important; }
-            .form-card { box-shadow: none; border: 1px solid #eee; margin-bottom: 10px; page-break-inside: avoid; }
+
+            /* Esconde formulário de filtros mas mostra resultados */
+            #tela-relatorios .form-card:first-of-type { display: none !important; }
+            #area-resultado-relatorio { display: block !important; }
+
+            /* Cards KPI — linha em vez de coluna */
+            #area-resultado-relatorio > div:first-child {
+                display: flex !important; flex-wrap: nowrap !important; gap: 6px !important;
+                margin-bottom: 14px !important;
+            }
+            .bi-card-click {
+                flex: 1 !important; padding: 10px 8px !important;
+                border: 1px solid #ddd !important; border-radius: 6px !important;
+                box-shadow: none !important; cursor: default !important;
+                page-break-inside: avoid;
+            }
+            .bi-card-click p { display: none !important; } /* esconde "▼ ver viagens" */
+            .bi-card-click h2 { font-size: 13pt !important; }
+            .bi-card-click h4 { font-size: 9pt !important; }
+
+            /* Cabeçalho de impressão */
+            #print-header { display: block !important; }
+
+            /* Tabela */
+            .data-table { width: 100% !important; font-size: 9pt !important; border-collapse: collapse !important; }
+            .data-table th { background-color: #1a237e !important; color: white !important; padding: 6px 5px !important; font-size: 8pt !important; }
+            .data-table td { padding: 5px !important; border: 1px solid #ccc !important; }
+            .data-table tr { page-break-inside: avoid; }
+            .table-scroll { overflow: visible !important; }
+
+            /* Bloco de totais consolidados */
+            #print-totais { display: block !important; }
+
+            /* Margem da página */
+            @page { margin: 15mm 12mm; size: A4 landscape; }
         }
+
+        /* ===== BI CARDS CLICÁVEIS ===== */
+        .bi-card-click { transition: box-shadow 0.2s, transform 0.15s !important; }
+        .bi-card-click:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.13) !important; transform: translateY(-2px); }
+        .bi-card-click:active { transform: translateY(0); }
 
         /* ===== DESKTOP ===== */
         @media (min-width: 768px) {
@@ -538,17 +581,64 @@
                         </form>
                     </div>
                     <div id="area-resultado-relatorio" style="display:none;">
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-                            <div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #1a237e;"><h4>Total Rodado</h4><h2 id="rel-total-km" style="color:#1a237e;">0 km</h2></div>
-                            <div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #c62828;"><h4>Custos Viagem</h4><h2 id="rel-total-custo" style="color:#c62828;">R$ 0,00</h2></div>
-                            <div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #1a237e;"><h4>Receita Frete</h4><h2 id="rel-total-frete" style="color:#1a237e;">R$ 0,00</h2></div>
-                            <div class="form-card" style="flex: 1; text-align: center; padding:15px; border-left: 4px solid #2e7d32;"><h4>Lucro das Viagens</h4><h2 id="rel-total-lucro" style="color:#2e7d32;">R$ 0,00</h2><p style="font-size:10px;">(Sem contar oficina/custos fixos)</p></div>
+
+                        <!-- CABEÇALHO VISÍVEL APENAS NA IMPRESSÃO -->
+                        <div id="print-header" style="display:none; margin-bottom:16px; border-bottom:2px solid #1a237e; padding-bottom:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div>
+                                    <h2 style="color:#1a237e; font-size:16pt; margin:0;">JB Transportes — Relatório Operacional BI</h2>
+                                    <p id="print-filtros" style="font-size:9pt; color:#555; margin-top:4px;"></p>
+                                </div>
+                                <div style="text-align:right; font-size:9pt; color:#888;">
+                                    <p id="print-data-geracao"></p>
+                                    <p>Gerado pelo Sistema ERP JB Transportes</p>
+                                </div>
+                            </div>
                         </div>
-                        <div style="overflow-x: auto;">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+
+                            <div class="form-card bi-card-click" onclick="abrirDetalheBI('km')" style="flex:1; text-align:center; padding:15px; border-left:4px solid #1a237e; cursor:pointer;">
+                                <h4 style="color:#555;">Total Rodado</h4>
+                                <h2 id="rel-total-km" style="color:#1a237e; margin:6px 0;">0 km</h2>
+                                <p style="font-size:10px; color:#1a237e; opacity:0.7;">▼ ver viagens</p>
+                            </div>
+
+                            <div class="form-card bi-card-click" onclick="abrirDetalheBI('custo')" style="flex:1; text-align:center; padding:15px; border-left:4px solid #c62828; cursor:pointer;">
+                                <h4 style="color:#555;">Custos Totais</h4>
+                                <h2 id="rel-total-custo" style="color:#c62828; margin:6px 0;">R$ 0,00</h2>
+                                <p style="font-size:10px; color:#c62828; opacity:0.7;">▼ combustível, pedágios, oficina</p>
+                            </div>
+
+                            <div class="form-card bi-card-click" onclick="abrirDetalheBI('frete')" style="flex:1; text-align:center; padding:15px; border-left:4px solid #1565c0; cursor:pointer;">
+                                <h4 style="color:#555;">Receita Frete</h4>
+                                <h2 id="rel-total-frete" style="color:#1565c0; margin:6px 0;">R$ 0,00</h2>
+                                <p style="font-size:10px; color:#1565c0; opacity:0.7;">▼ por viagem</p>
+                            </div>
+
+                            <div class="form-card bi-card-click" onclick="abrirDetalheBI('lucro')" style="flex:1; text-align:center; padding:15px; border-left:4px solid #2e7d32; cursor:pointer;">
+                                <h4 style="color:#555;">Lucro Líquido</h4>
+                                <h2 id="rel-total-lucro" style="color:#2e7d32; margin:6px 0;">R$ 0,00</h2>
+                                <p style="font-size:10px; color:#2e7d32; opacity:0.7;">▼ resultado detalhado</p>
+                            </div>
+
+                        </div>
+                        <div class="table-scroll">
                             <table class="data-table" id="tabela-relatorio">
-                                <thead><tr><th>Data</th><th>Veículo</th><th>Motorista</th><th>Cliente / Destino</th><th>KM</th><th>Média (km/l)</th><th>Comissão Mot.</th><th>Lucro</th></tr></thead>
+                                <thead><tr><th>Data</th><th>Veículo</th><th>Motorista</th><th>Cliente / Destino</th><th>KM</th><th>Média (km/l)</th><th>Combustível</th><th>Pedágio</th><th>Comissão Mot.</th><th>Custo Total</th><th>Receita Frete</th><th>Lucro</th></tr></thead>
                                 <tbody></tbody>
+                                <tfoot id="tabela-relatorio-tfoot" style="font-weight:bold; background:#e8eaf6;"></tfoot>
                             </table>
+                        </div>
+
+                        <!-- BLOCO DE TOTAIS CONSOLIDADOS — visível na tela e na impressão -->
+                        <div id="print-totais" style="margin-top:20px; border:1px solid #ddd; border-radius:8px; overflow:hidden;">
+                            <div style="background:#1a237e; color:white; padding:10px 16px; font-weight:bold; font-size:13px;">
+                                📋 Consolidado Financeiro do Período
+                            </div>
+                            <div id="print-totais-corpo" style="padding:14px; display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; background:#f8f9ff;">
+                            </div>
+                            <div id="print-totais-rodape" style="padding:12px 16px; background:#e8eaf6; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-weight:bold; font-size:14px; border-top:2px solid #1a237e;">
+                            </div>
                         </div>
                         <div class="flex-row no-print" style="margin-top: 20px;">
                             <button type="button" class="btn-submit btn-print" onclick="window.print()"><span class="material-icons">picture_as_pdf</span> Salvar PDF</button>
@@ -567,6 +657,17 @@
         <p id="loading-status" style="font-size:12px; color:rgba(255,255,255,0.6); margin-top:8px;">Aguarde</p>
     </div>
     <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+
+    <!-- MODAL DETALHE BI -->
+    <div id="modal-bi-detalhe" class="modal-overlay" onclick="if(event.target===this)document.getElementById('modal-bi-detalhe').classList.remove('open')">
+        <div class="modal-box" style="max-width:600px;">
+            <button class="close-modal" onclick="document.getElementById('modal-bi-detalhe').classList.remove('open')">✕</button>
+            <h3 id="bi-modal-titulo" style="margin-bottom:4px; padding-right:32px; color:#1a237e;"></h3>
+            <p id="bi-modal-subtitulo" style="font-size:12px; color:#888; margin-bottom:16px;"></p>
+            <div id="bi-modal-corpo" style="font-size:13px; max-height:60vh; overflow-y:auto; -webkit-overflow-scrolling:touch;"></div>
+            <div id="bi-modal-total" style="margin-top:14px; padding-top:12px; border-top:2px solid #e0e0e0; font-size:15px; font-weight:bold; display:flex; justify-content:space-between;"></div>
+        </div>
+    </div>
 
     <!-- MODAL PENDÊNCIAS LEGAIS -->
     <div id="modal-alertas" class="modal-overlay" onclick="if(event.target===this)fecharModalAlertas()">
@@ -1224,53 +1325,370 @@
             for(let id in dbMotoristas) { selMot.innerHTML += `<option value="${id}">${dbMotoristas[id].nome}</option>`; }
         }
         
+        // ===== BI: DADOS DETALHADOS POR CARD =====
+        let _biDetalhes = { viagens: [], custos: [], frete: [], lucro: [], filtro: {} };
+
+        window.abrirDetalheBI = (tipo) => {
+            const modal = document.getElementById('modal-bi-detalhe');
+            const titulo = document.getElementById('bi-modal-titulo');
+            const subtitulo = document.getElementById('bi-modal-subtitulo');
+            const corpo = document.getElementById('bi-modal-corpo');
+            const totalEl = document.getElementById('bi-modal-total');
+
+            const f = _biDetalhes.filtro;
+            const periodoStr = f.dataIni && f.dataFim ? `${f.dataIni} a ${f.dataFim}` : '';
+            const filtroStr = [f.veiculo !== 'todos' ? `Veículo: ${f.veiculo}` : '', f.motorista !== 'todos' ? `Motorista: ${f.motorista}` : '', f.texto ? `Palavra-chave: "${f.texto}"` : ''].filter(Boolean).join(' | ') || 'Todos';
+
+            subtitulo.textContent = `Período: ${periodoStr} — Filtro: ${filtroStr}`;
+            corpo.innerHTML = '';
+            totalEl.innerHTML = '';
+
+            const fmtR = (v) => 'R$ ' + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+            const fmtD = (d) => d || '-';
+
+            if (tipo === 'km') {
+                titulo.textContent = '🛣️ Total Rodado — Viagens';
+                let html = '', totalKm = 0;
+                _biDetalhes.viagens.forEach(v => {
+                    totalKm += v.km;
+                    html += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f0f0f0;">
+                        <div><b>${v.destino}</b><br><span style="color:#888; font-size:11px;">${fmtD(v.data)} | ${v.veiculo} | ${v.motorista}</span></div>
+                        <div style="text-align:right; min-width:70px;"><b style="color:#1a237e;">${v.km} km</b></div>
+                    </div>`;
+                });
+                corpo.innerHTML = html || '<p style="color:#888; text-align:center; padding:20px;">Nenhuma viagem no período.</p>';
+                totalEl.innerHTML = `<span>Total de ${_biDetalhes.viagens.length} viagem(ns)</span><span style="color:#1a237e;">${totalKm} km</span>`;
+
+            } else if (tipo === 'custo') {
+                titulo.textContent = '💸 Custos Detalhados';
+                let html = '', totalGeral = 0;
+
+                // Custos de viagem (combustível + pedágio + comissão)
+                let tCustosViagem = 0;
+                html += `<div style="background:#f8f8f8; padding:8px 10px; border-radius:6px; margin-bottom:8px;"><b style="color:#c62828;">Custos por Viagem</b></div>`;
+                _biDetalhes.viagens.forEach(v => {
+                    if (!v.concluida) return;
+                    tCustosViagem += v.custoViagem;
+                    html += `<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f5f5f5; padding-left:8px;">
+                        <div><span style="font-size:12px;">${v.destino}</span><br><span style="color:#aaa; font-size:11px;">${fmtD(v.data)} | Comb: ${fmtR(v.combustivel)} | Ped: ${fmtR(v.pedagio)} | Com: ${fmtR(v.comissao)}</span></div>
+                        <b style="color:#c62828; min-width:80px; text-align:right;">${fmtR(v.custoViagem)}</b>
+                    </div>`;
+                });
+                totalGeral += tCustosViagem;
+                html += `<div style="text-align:right; padding:6px 0 12px; color:#c62828; font-weight:bold;">Subtotal: ${fmtR(tCustosViagem)}</div>`;
+
+                // Manutenções no período filtrado
+                const dIni = new Date(f.rawIni); const dFim = new Date(f.rawFim);
+                const veicIds = f.veiculoId !== 'todos' ? [f.veiculoId] : null;
+                let manutsNoPeriodo = Object.values(dbManutencoes).filter(m => {
+                    const d = new Date(m.data_manutencao + 'T12:00:00');
+                    if (d < dIni || d > dFim) return false;
+                    if (veicIds && !veicIds.includes(m.veiculo_id)) return false;
+                    return true;
+                });
+                let tManut = manutsNoPeriodo.reduce((s, m) => s + (m.custo || 0), 0);
+                totalGeral += tManut;
+                html += `<div style="background:#f8f8f8; padding:8px 10px; border-radius:6px; margin-bottom:8px; margin-top:4px;"><b style="color:#e65100;">Oficina / Manutenção</b></div>`;
+                if (manutsNoPeriodo.length === 0) {
+                    html += `<p style="color:#aaa; font-size:12px; padding:6px 0 12px 8px;">Nenhuma manutenção no período.</p>`;
+                } else {
+                    manutsNoPeriodo.forEach(m => {
+                        html += `<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f5f5f5; padding-left:8px;">
+                            <div><span style="font-size:12px;">${m.tipo} — ${m.veiculo_nome}</span><br><span style="color:#aaa; font-size:11px;">${new Date(m.data_manutencao + 'T12:00:00').toLocaleDateString('pt-BR')} | ${m.descricao}</span></div>
+                            <b style="color:#e65100; min-width:80px; text-align:right;">${fmtR(m.custo)}</b>
+                        </div>`;
+                    });
+                    html += `<div style="text-align:right; padding:6px 0 12px; color:#e65100; font-weight:bold;">Subtotal: ${fmtR(tManut)}</div>`;
+                }
+
+                // Custos fixos no período
+                let custosFixosNoPeriodo = Object.values(dbCustosFixos).filter(c => {
+                    const d = new Date(c.data_pagamento + 'T12:00:00');
+                    return d >= dIni && d <= dFim;
+                });
+                let tCF = custosFixosNoPeriodo.reduce((s, c) => s + (c.valor || 0), 0);
+                totalGeral += tCF;
+                html += `<div style="background:#f8f8f8; padding:8px 10px; border-radius:6px; margin-bottom:8px; margin-top:4px;"><b style="color:#607d8b;">Custos Fixos da Empresa</b></div>`;
+                if (custosFixosNoPeriodo.length === 0) {
+                    html += `<p style="color:#aaa; font-size:12px; padding:6px 0 12px 8px;">Nenhum custo fixo no período.</p>`;
+                } else {
+                    custosFixosNoPeriodo.forEach(c => {
+                        html += `<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f5f5f5; padding-left:8px;">
+                            <div><span style="font-size:12px;">${c.descricao}</span><br><span style="color:#aaa; font-size:11px;">${new Date(c.data_pagamento + 'T12:00:00').toLocaleDateString('pt-BR')} | ${c.categoria}</span></div>
+                            <b style="color:#607d8b; min-width:80px; text-align:right;">${fmtR(c.valor)}</b>
+                        </div>`;
+                    });
+                    html += `<div style="text-align:right; padding:6px 0 12px; color:#607d8b; font-weight:bold;">Subtotal: ${fmtR(tCF)}</div>`;
+                }
+
+                corpo.innerHTML = html;
+                totalEl.innerHTML = `<span style="color:#c62828;">TOTAL DE CUSTOS</span><span style="color:#c62828;">${fmtR(totalGeral)}</span>`;
+
+            } else if (tipo === 'frete') {
+                titulo.textContent = '💰 Receita por Frete';
+                let html = '', totalFrete = 0;
+                _biDetalhes.viagens.forEach(v => {
+                    totalFrete += v.frete;
+                    const statusIcon = v.concluida ? '✅' : '🔄';
+                    html += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f0f0f0;">
+                        <div><b>${statusIcon} ${v.destino}</b><br><span style="color:#888; font-size:11px;">${fmtD(v.data)} | ${v.contratante || 'Sem cliente'} | ${v.motorista}</span></div>
+                        <b style="color:#1565c0; min-width:80px; text-align:right;">${fmtR(v.frete)}</b>
+                    </div>`;
+                });
+                corpo.innerHTML = html || '<p style="color:#888; text-align:center; padding:20px;">Nenhuma viagem no período.</p>';
+                totalEl.innerHTML = `<span>Total de ${_biDetalhes.viagens.length} viagem(ns)</span><span style="color:#1565c0;">${fmtR(totalFrete)}</span>`;
+
+            } else if (tipo === 'lucro') {
+                titulo.textContent = '📊 Resultado Financeiro Completo';
+                let html = '', tFrete = 0, tCustoViag = 0, tManut = 0, tCF = 0;
+
+                _biDetalhes.viagens.forEach(v => {
+                    tFrete += v.frete; tCustoViag += v.custoViagem;
+                    const cor = v.lucro >= 0 ? '#2e7d32' : '#c62828';
+                    html += `<div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #f0f0f0;">
+                        <div><b>${v.destino}</b><br><span style="color:#aaa; font-size:11px;">${fmtD(v.data)} | Frete: ${fmtR(v.frete)} | Custos: ${fmtR(v.custoViagem)}</span></div>
+                        <b style="color:${cor}; min-width:80px; text-align:right;">${fmtR(v.lucro)}</b>
+                    </div>`;
+                });
+
+                const dIni = new Date(f.rawIni); const dFim = new Date(f.rawFim);
+                const veicIds = f.veiculoId !== 'todos' ? [f.veiculoId] : null;
+                tManut = Object.values(dbManutencoes).filter(m => { const d = new Date(m.data_manutencao+'T12:00:00'); return d >= dIni && d <= dFim && (!veicIds || veicIds.includes(m.veiculo_id)); }).reduce((s,m) => s+(m.custo||0), 0);
+                tCF    = Object.values(dbCustosFixos).filter(c => { const d = new Date(c.data_pagamento+'T12:00:00'); return d >= dIni && d <= dFim; }).reduce((s,c) => s+(c.valor||0), 0);
+
+                const lucroViagens = tFrete - tCustoViag;
+                const lucroReal = lucroViagens - tManut - tCF;
+                const margem = tFrete > 0 ? (lucroReal / tFrete * 100) : 0;
+                const corM = margem >= 15 ? '#2e7d32' : margem >= 0 ? '#f57c00' : '#c62828';
+
+                html += `<div style="margin-top:14px; background:#f0f4ff; border-radius:8px; padding:12px;">
+                    <div style="display:flex; justify-content:space-between; padding:4px 0;"><span>Receita Total Fretes</span><b style="color:#1565c0;">${fmtR(tFrete)}</b></div>
+                    <div style="display:flex; justify-content:space-between; padding:4px 0;"><span>(−) Custos de Viagem</span><b style="color:#c62828;">${fmtR(tCustoViag)}</b></div>
+                    <div style="display:flex; justify-content:space-between; padding:4px 0;"><span>(−) Manutenções / Oficina</span><b style="color:#e65100;">${fmtR(tManut)}</b></div>
+                    <div style="display:flex; justify-content:space-between; padding:4px 0;"><span>(−) Custos Fixos</span><b style="color:#607d8b;">${fmtR(tCF)}</b></div>
+                    <div style="display:flex; justify-content:space-between; padding:8px 0 4px; border-top:2px solid #1a237e; margin-top:6px;">
+                        <b style="color:#1a237e;">Margem</b>
+                        <b style="color:${corM};">${margem.toFixed(1).replace('.',',')}%</b>
+                    </div>
+                </div>`;
+
+                corpo.innerHTML = html || '<p style="color:#888; text-align:center; padding:20px;">Nenhuma viagem no período.</p>';
+                const corLucro = lucroReal >= 0 ? '#2e7d32' : '#c62828';
+                totalEl.innerHTML = `<span style="color:${corLucro};">LUCRO LÍQUIDO REAL</span><span style="color:${corLucro};">${fmtR(lucroReal)}</span>`;
+            }
+
+            modal.classList.add('open');
+        };
+
         document.getElementById('form-filtro-relatorio').addEventListener('submit', (e) => {
             e.preventDefault();
-            const dIni = new Date(document.getElementById('filtro-data-ini').value + "T00:00:00"); const dFim = new Date(document.getElementById('filtro-data-fim').value + "T23:59:59");
-            const statusFilter = document.getElementById('filtro-status').value; const veicFilter = document.getElementById('filtro-veiculo').value;
-            const motFilter = document.getElementById('filtro-motorista').value; const textFilter = document.getElementById('filtro-texto').value.toLowerCase();
-            let sumKm = 0; let sumFrete = 0; let sumCusto = 0; let sumLucro = 0; const corpoTabela = document.querySelector('#tabela-relatorio tbody');
+            const rawIni = document.getElementById('filtro-data-ini').value;
+            const rawFim = document.getElementById('filtro-data-fim').value;
+            const dIni = new Date(rawIni + "T00:00:00"); const dFim = new Date(rawFim + "T23:59:59");
+            const statusFilter = document.getElementById('filtro-status').value;
+            const veicFilter = document.getElementById('filtro-veiculo').value;
+            const motFilter = document.getElementById('filtro-motorista').value;
+            const textFilter = document.getElementById('filtro-texto').value.toLowerCase();
+
+            // Nome legível do veículo/motorista para o modal
+            const selVeic = document.getElementById('filtro-veiculo');
+            const selMot = document.getElementById('filtro-motorista');
+            const veicNome = selVeic.options[selVeic.selectedIndex].text;
+            const motNome = selMot.options[selMot.selectedIndex].text;
+
+            let sumKm = 0; let sumFrete = 0; let sumCusto = 0; let sumLucro = 0;
+            const corpoTabela = document.querySelector('#tabela-relatorio tbody');
             corpoTabela.innerHTML = ''; dadosFiltradosGlobais = [];
+
+            // Armazena dados detalhados para os modais
+            _biDetalhes.viagens = [];
+            _biDetalhes.filtro = {
+                dataIni: new Date(rawIni+'T12:00:00').toLocaleDateString('pt-BR'),
+                dataFim: new Date(rawFim+'T12:00:00').toLocaleDateString('pt-BR'),
+                rawIni: rawIni + "T00:00:00",
+                rawFim: rawFim + "T23:59:59",
+                veiculo: veicNome,
+                veiculoId: veicFilter,
+                motorista: motNome,
+                texto: textFilter
+            };
+
+            const fR = (n) => 'R$ ' + (n||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+
             Object.values(dbViagens).forEach(v => {
-                if(!v.data_saida) return; const dViagem = new Date(v.data_saida);
+                if(!v.data_saida) return;
+                const dViagem = new Date(v.data_saida);
                 if(dViagem >= dIni && dViagem <= dFim) {
                     if(statusFilter === 'todos' || v.status === statusFilter) {
                         if(veicFilter === 'todos' || v.veiculo_id === veicFilter) {
                             if(motFilter === 'todos' || v.motorista_id === motFilter) {
                                 let checkTexto = (v.destino || '').toLowerCase() + " " + (v.contratante || '').toLowerCase();
                                 if(textFilter === '' || checkTexto.includes(textFilter)) {
-                                    let dist = v.distancia || 0; let frete = v.valor_frete || 0; let custo = v.total_custos || 0; let lucro = v.lucro_liquido || 0;
+                                    let dist = v.distancia || 0; let frete = v.valor_frete || 0;
+                                    let custo = v.total_custos || 0; let lucro = v.lucro_liquido || 0;
+                                    let comb = v.custo_combustivel || 0;
+                                    let ped  = v.custo_pedagio || 0;
+                                    let com  = v.valor_comissao || 0;
                                     if(v.status === 'concluida') { sumKm += dist; sumFrete += frete; sumCusto += custo; sumLucro += lucro; }
                                     let dataStr = dViagem.toLocaleDateString('pt-BR');
-                                    dadosFiltradosGlobais.push({ data: dataStr, veiculo: v.veiculo_nome, motorista: v.motorista_nome, cliente: v.contratante, km: dist, media: (v.media_kml||0), comissao: (v.valor_comissao||0), lucro: lucro });
+
+                                    _biDetalhes.viagens.push({
+                                        data: dataStr,
+                                        destino: (v.contratante ? v.contratante + ' \u2192 ' : '') + (v.destino || '-'),
+                                        contratante: v.contratante || '', veiculo: v.veiculo_nome || '-', motorista: v.motorista_nome || '-',
+                                        km: dist, frete: frete, combustivel: comb, pedagio: ped, comissao: com,
+                                        custoViagem: custo, lucro: lucro, concluida: v.status === 'concluida'
+                                    });
+
+                                    dadosFiltradosGlobais.push({ data: dataStr, veiculo: v.veiculo_nome, motorista: v.motorista_nome,
+                                        cliente: v.contratante, destino: v.destino, km: dist, media: (v.media_kml||0),
+                                        combustivel: comb, pedagio: ped, comissao: com, custo: custo, frete: frete, lucro: lucro, status: v.status });
+
                                     let corL = lucro >= 0 ? '#2e7d32' : '#c62828';
-                                    corpoTabela.innerHTML += `<tr><td>${dataStr}</td><td>${v.veiculo_nome}</td><td>${v.motorista_nome}</td><td>${v.contratante||''} - ${v.destino}</td><td>${dist} km</td><td>${(v.media_kml||0).toFixed(1)}</td><td>R$ ${(v.valor_comissao||0).toFixed(2)}</td><td style="color:${corL}; font-weight:bold;">R$ ${lucro.toFixed(2)}</td></tr>`;
+                                    corpoTabela.innerHTML += '<tr>'
+                                        + '<td>' + dataStr + '</td>'
+                                        + '<td>' + (v.veiculo_nome||'') + '</td>'
+                                        + '<td>' + (v.motorista_nome||'') + '</td>'
+                                        + '<td>' + (v.contratante||'') + ' — ' + (v.destino||'') + '</td>'
+                                        + '<td style="text-align:right;">' + dist + ' km</td>'
+                                        + '<td style="text-align:right;">' + (v.media_kml||0).toFixed(1) + '</td>'
+                                        + '<td style="text-align:right;">' + fR(comb) + '</td>'
+                                        + '<td style="text-align:right;">' + fR(ped) + '</td>'
+                                        + '<td style="text-align:right;">' + fR(com) + '</td>'
+                                        + '<td style="text-align:right;color:#c62828;">' + fR(custo) + '</td>'
+                                        + '<td style="text-align:right;color:#1565c0;">' + fR(frete) + '</td>'
+                                        + '<td style="text-align:right;font-weight:bold;color:' + corL + ';">' + fR(lucro) + '</td>'
+                                        + '</tr>';
                                 }
                             }
                         }
                     }
                 }
             });
-            
+
+            // Rodape totais tabela
+            const tfoot = document.getElementById('tabela-relatorio-tfoot');
+            const sumComb = dadosFiltradosGlobais.reduce((s,r)=>s+(r.combustivel||0),0);
+            const sumPed  = dadosFiltradosGlobais.reduce((s,r)=>s+(r.pedagio||0),0);
+            const sumCom  = dadosFiltradosGlobais.reduce((s,r)=>s+(r.comissao||0),0);
+            const corTotal = sumLucro >= 0 ? '#2e7d32' : '#c62828';
+            tfoot.innerHTML = '<tr style="background:#e8eaf6;">'
+                + '<td colspan="4" style="font-weight:bold;color:#1a237e;">TOTAIS — ' + dadosFiltradosGlobais.length + ' viagem(ns) concluída(s)</td>'
+                + '<td style="text-align:right;font-weight:bold;">' + sumKm + ' km</td><td>—</td>'
+                + '<td style="text-align:right;font-weight:bold;">' + fR(sumComb) + '</td>'
+                + '<td style="text-align:right;font-weight:bold;">' + fR(sumPed) + '</td>'
+                + '<td style="text-align:right;font-weight:bold;">' + fR(sumCom) + '</td>'
+                + '<td style="text-align:right;font-weight:bold;color:#c62828;">' + fR(sumCusto) + '</td>'
+                + '<td style="text-align:right;font-weight:bold;color:#1565c0;">' + fR(sumFrete) + '</td>'
+                + '<td style="text-align:right;font-weight:bold;color:' + corTotal + ';">' + fR(sumLucro) + '</td>'
+                + '</tr>';
+
+            // Manutencoes e custos fixos
+            const dIniM = new Date(_biDetalhes.filtro.rawIni); const dFimM = new Date(_biDetalhes.filtro.rawFim);
+            const veicIds = veicFilter !== 'todos' ? [veicFilter] : null;
+            const tManut = Object.values(dbManutencoes).filter(m => { const d = new Date(m.data_manutencao+'T12:00:00'); return d>=dIniM && d<=dFimM && (!veicIds||veicIds.includes(m.veiculo_id)); }).reduce((s,m)=>s+(m.custo||0),0);
+            const tCF    = Object.values(dbCustosFixos).filter(c => { const d = new Date(c.data_pagamento+'T12:00:00'); return d>=dIniM && d<=dFimM; }).reduce((s,c)=>s+(c.valor||0),0);
+            const lucroReal = sumLucro - tManut - tCF;
+            const margem = sumFrete > 0 ? (lucroReal / sumFrete * 100) : 0;
+            const corM = margem >= 15 ? '#2e7d32' : margem >= 0 ? '#f57c00' : '#c62828';
+            const corLR = lucroReal >= 0 ? '#2e7d32' : '#c62828';
+
+            document.getElementById('print-totais-corpo').innerHTML =
+                '<div style="background:white;padding:10px;border-radius:6px;border-left:3px solid #1a237e;"><div style="font-size:10px;color:#888;">KM Total Rodado</div><div style="font-size:16px;font-weight:bold;color:#1a237e;">' + sumKm + ' km</div></div>'
+                + '<div style="background:white;padding:10px;border-radius:6px;border-left:3px solid #1565c0;"><div style="font-size:10px;color:#888;">Receita Total Fretes</div><div style="font-size:16px;font-weight:bold;color:#1565c0;">' + fR(sumFrete) + '</div></div>'
+                + '<div style="background:white;padding:10px;border-radius:6px;border-left:3px solid #c62828;"><div style="font-size:10px;color:#888;">Custos de Viagem</div><div style="font-size:16px;font-weight:bold;color:#c62828;">' + fR(sumCusto) + '</div></div>'
+                + '<div style="background:white;padding:10px;border-radius:6px;border-left:3px solid #e65100;"><div style="font-size:10px;color:#888;">Oficina / Manutencao</div><div style="font-size:16px;font-weight:bold;color:#e65100;">' + fR(tManut) + '</div></div>'
+                + '<div style="background:white;padding:10px;border-radius:6px;border-left:3px solid #607d8b;"><div style="font-size:10px;color:#888;">Custos Fixos</div><div style="font-size:16px;font-weight:bold;color:#607d8b;">' + fR(tCF) + '</div></div>'
+                + '<div style="background:white;padding:10px;border-radius:6px;border-left:3px solid ' + corM + ';"><div style="font-size:10px;color:#888;">Margem de Lucro</div><div style="font-size:16px;font-weight:bold;color:' + corM + ';">' + margem.toFixed(1).replace('.',',') + '%</div></div>';
+
+            document.getElementById('print-totais-rodape').innerHTML =
+                '<span style="color:#1a237e;">LUCRO LÍQUIDO REAL (descontado oficina + fixos)</span>'
+                + '<span style="color:' + corLR + ';font-size:18px;">' + fR(lucroReal) + '</span>';
+
+            // Cabecalho impressao
+            const f2 = _biDetalhes.filtro;
+            document.getElementById('print-filtros').textContent = 'Período: ' + f2.dataIni + ' a ' + f2.dataFim + ' | Veículo: ' + f2.veiculo + ' | Motorista: ' + f2.motorista + (f2.texto ? ' | Filtro: "' + f2.texto + '"' : '');
+            document.getElementById('print-data-geracao').textContent = 'Gerado em: ' + new Date().toLocaleString('pt-BR');
+
             let margemBI = sumFrete > 0 ? (sumLucro / sumFrete) * 100 : 0;
             let corMargem = margemBI >= 15 ? '#2e7d32' : (margemBI >= 0 ? '#f57c00' : '#c62828');
-            let bgMargem = margemBI >= 15 ? '#e8f5e9' : (margemBI >= 0 ? '#fff3e0' : '#ffebee');
+            let bgMargem  = margemBI >= 15 ? '#e8f5e9' : (margemBI >= 0 ? '#fff3e0' : '#ffebee');
+            document.getElementById('rel-total-km').innerText = sumKm + " km";
+            document.getElementById('rel-total-frete').innerText = fR(sumFrete);
+            document.getElementById('rel-total-custo').innerText = fR(sumCusto);
+            document.getElementById('rel-total-lucro').innerHTML = fR(sumLucro) + ' <div style="font-size:12px;background:' + bgMargem + ';color:' + corMargem + ';padding:2px 8px;border-radius:12px;display:inline-block;margin-top:5px;">' + margemBI.toFixed(1).replace('.',',') + '% Margem</div>';
 
-            document.getElementById('rel-total-km').innerText = sumKm + " km"; 
-            document.getElementById('rel-total-frete').innerText = "R$ " + sumFrete.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            document.getElementById('rel-total-custo').innerText = "R$ " + sumCusto.toLocaleString('pt-BR', {minimumFractionDigits: 2}); 
-            
-            document.getElementById('rel-total-lucro').innerHTML = `R$ ${sumLucro.toLocaleString('pt-BR', {minimumFractionDigits: 2})} <div style="font-size:12px; background:${bgMargem}; color:${corMargem}; padding:2px 8px; border-radius:12px; display:inline-block; margin-top:5px;">${margemBI.toFixed(1).replace('.',',')}% Margem</div>`;
-            
             document.getElementById('area-resultado-relatorio').style.display = 'block';
         });
 
         window.exportarExcel = () => {
-            if(dadosFiltradosGlobais.length === 0) return;
-            let csvContent = "Data Saida;Veiculo;Motorista;Cliente;KM;Media (km/l);Comissao;Lucro Viagem\n";
-            dadosFiltradosGlobais.forEach(row => { csvContent += `${row.data};${row.veiculo};${row.motorista};${row.cliente};${row.km};${row.media.toFixed(1).replace('.',',')};${row.comissao.toFixed(2).replace('.',',')};${row.lucro.toFixed(2).replace('.',',')}\n`; });
-            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "BI_JbTransportes_Financeiro.csv";
+            if(dadosFiltradosGlobais.length === 0) return alert('Gere um relatório primeiro.');
+            const f2 = _biDetalhes.filtro;
+            const sep = ';';
+            const fN = (n) => (n||0).toFixed(2).replace('.',',');
+
+            // Aba 1 — Viagens
+            let csv = 'RELAT\u00d3RIO OPERACIONAL BI \u2014 JB TRANSPORTES' + sep.repeat(11) + '\n';
+            csv += 'Per\u00edodo:' + sep + f2.dataIni + ' a ' + f2.dataFim + sep.repeat(10) + '\n';
+            csv += 'Ve\u00edculo:' + sep + f2.veiculo + sep + 'Motorista:' + sep + f2.motorista + sep.repeat(8) + '\n';
+            csv += 'Gerado em:' + sep + new Date().toLocaleString('pt-BR') + sep.repeat(10) + '\n\n';
+
+            csv += 'VIAGENS\n';
+            csv += ['Data','Veiculo','Motorista','Cliente','Destino','KM','Media km/l','Combustivel','Pedagio','Comissao Mot.','Custo Total Viagem','Receita Frete','Lucro Viagem','Status'].join(sep) + '\n';
+            dadosFiltradosGlobais.forEach(r => {
+                csv += [r.data, r.veiculo, r.motorista, r.cliente||'', r.destino||'', r.km,
+                    (r.media||0).toFixed(1).replace('.',','), fN(r.combustivel), fN(r.pedagio),
+                    fN(r.comissao), fN(r.custo), fN(r.frete), fN(r.lucro), r.status].join(sep) + '\n';
+            });
+
+            // Totais viagens
+            const tKm   = dadosFiltradosGlobais.reduce((s,r)=>s+r.km,0);
+            const tFrete = dadosFiltradosGlobais.reduce((s,r)=>s+r.frete,0);
+            const tCusto = dadosFiltradosGlobais.reduce((s,r)=>s+r.custo,0);
+            const tLucro = dadosFiltradosGlobais.reduce((s,r)=>s+r.lucro,0);
+            const tComb  = dadosFiltradosGlobais.reduce((s,r)=>s+(r.combustivel||0),0);
+            const tPed   = dadosFiltradosGlobais.reduce((s,r)=>s+(r.pedagio||0),0);
+            const tCom   = dadosFiltradosGlobais.reduce((s,r)=>s+(r.comissao||0),0);
+            csv += ['TOTAL',sep,sep,sep,sep, tKm, sep, fN(tComb), fN(tPed), fN(tCom), fN(tCusto), fN(tFrete), fN(tLucro), sep].join(sep) + '\n\n';
+
+            // Manutenções no período
+            const dIniM = new Date(f2.rawIni); const dFimM = new Date(f2.rawFim);
+            const veicIds = f2.veiculoId !== 'todos' ? [f2.veiculoId] : null;
+            const manutsP = Object.values(dbManutencoes).filter(m => { const d = new Date(m.data_manutencao+'T12:00:00'); return d>=dIniM && d<=dFimM && (!veicIds||veicIds.includes(m.veiculo_id)); });
+            const tManut = manutsP.reduce((s,m)=>s+(m.custo||0),0);
+
+            csv += 'OFICINA / MANUTENCAO\n';
+            csv += ['Data','Veiculo','Tipo','Descricao','Custo'].join(sep) + '\n';
+            if(manutsP.length === 0) { csv += 'Nenhuma manutencao no periodo\n'; }
+            else { manutsP.forEach(m => { csv += [new Date(m.data_manutencao+'T12:00:00').toLocaleDateString('pt-BR'), m.veiculo_nome, m.tipo, m.descricao, fN(m.custo)].join(sep) + '\n'; }); }
+            csv += ['TOTAL OFICINA',sep,sep,sep, fN(tManut)].join(sep) + '\n\n';
+
+            // Custos fixos no período
+            const custosP = Object.values(dbCustosFixos).filter(c => { const d = new Date(c.data_pagamento+'T12:00:00'); return d>=dIniM && d<=dFimM; });
+            const tCF = custosP.reduce((s,c)=>s+(c.valor||0),0);
+
+            csv += 'CUSTOS FIXOS DA EMPRESA\n';
+            csv += ['Data','Descricao','Categoria','Valor'].join(sep) + '\n';
+            if(custosP.length === 0) { csv += 'Nenhum custo fixo no periodo\n'; }
+            else { custosP.forEach(c => { csv += [new Date(c.data_pagamento+'T12:00:00').toLocaleDateString('pt-BR'), c.descricao, c.categoria, fN(c.valor)].join(sep) + '\n'; }); }
+            csv += ['TOTAL FIXOS',sep,sep, fN(tCF)].join(sep) + '\n\n';
+
+            // Consolidado final
+            const lucroReal = tLucro - tManut - tCF;
+            const margem = tFrete > 0 ? (lucroReal / tFrete * 100) : 0;
+            csv += 'CONSOLIDADO FINANCEIRO DO PERIODO\n';
+            csv += ['Receita Total Fretes', fN(tFrete)].join(sep) + '\n';
+            csv += ['(-) Custos de Viagem', fN(tCusto)].join(sep) + '\n';
+            csv += ['(-) Oficina / Manutencao', fN(tManut)].join(sep) + '\n';
+            csv += ['(-) Custos Fixos', fN(tCF)].join(sep) + '\n';
+            csv += ['LUCRO LIQUIDO REAL', fN(lucroReal)].join(sep) + '\n';
+            csv += ['Margem de Lucro', margem.toFixed(1).replace('.',',') + '%'].join(sep) + '\n';
+            csv += ['KM Total Rodado', tKm + ' km'].join(sep) + '\n';
+
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+            const periodo = (f2.dataIni||'').replace(/\//g,'-') + '_' + (f2.dataFim||'').replace(/\//g,'-');
+            link.download = 'BI_JbTransportes_' + periodo + '.csv';
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         };
 
