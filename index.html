@@ -642,25 +642,47 @@
         let isUserAdmin = false;
         let meuMotoristaId = null; 
 
-        // --- Controle de carregamento inicial ---
-        const COLECOES_NECESSARIAS = ['configuracoes','veiculos','motoristas','viagens','manutencoes','custos_fixos','pagamentos'];
+        // Coleções por perfil
+        const COLECOES_ADMIN    = ['configuracoes','veiculos','motoristas','viagens','manutencoes','custos_fixos','pagamentos'];
+        const COLECOES_MOTORISTA = ['configuracoes','motoristas','viagens','pagamentos'];
+        let COLECOES_NECESSARIAS = COLECOES_ADMIN; // será redefinido em iniciarListeners
+
         const _snapCarregados = new Set();
         let _appPronto = false;
         let _unsubs = [];
+        let _loadingTimeout = null;
 
         function marcarCarregado(nome) {
             _snapCarregados.add(nome);
             const el = document.getElementById('loading-status');
             if (el) el.textContent = `${_snapCarregados.size} de ${COLECOES_NECESSARIAS.length} coleções`;
             if (_snapCarregados.size >= COLECOES_NECESSARIAS.length && !_appPronto) {
-                _appPronto = true;
-                document.getElementById('loading-overlay').style.display = 'none';
-                window.navegar('dashboard');
+                _liberar();
             }
+        }
+
+        function _liberar() {
+            if (_appPronto) return;
+            _appPronto = true;
+            if (_loadingTimeout) { clearTimeout(_loadingTimeout); _loadingTimeout = null; }
+            document.getElementById('loading-overlay').style.display = 'none';
+            window.navegar('dashboard');
         }
 
         function iniciarListeners() {
             _unsubs.forEach(fn => fn()); _unsubs = []; _snapCarregados.clear(); _appPronto = false;
+            if (_loadingTimeout) clearTimeout(_loadingTimeout);
+
+            // Define quais coleções aguardar conforme perfil
+            COLECOES_NECESSARIAS = isUserAdmin ? COLECOES_ADMIN : COLECOES_MOTORISTA;
+
+            // Timeout de segurança: se demorar >8s, libera com o que tiver
+            _loadingTimeout = setTimeout(() => {
+                if (!_appPronto) {
+                    console.warn('Timeout de carregamento — liberando app com dados parciais.');
+                    _liberar();
+                }
+            }, 8000);
 
             // 1. Configurações
             _unsubs.push(onSnapshot(doc(db, "configuracoes", "sistema"), (docSnap) => {
@@ -744,31 +766,32 @@
                 marcarCarregado('viagens');
             }));
 
-            // 5. Manutenções
-            _unsubs.push(onSnapshot(collection(db, "manutencoes"), (snap) => {
-                const lista = document.getElementById('lista-manutencoes'); lista.innerHTML = ''; dbManutencoes = {}; let manutArray = [];
-                snap.forEach(d => { const m = d.data(); dbManutencoes[d.id] = m; manutArray.push({ id: d.id, ...m }); });
-                manutArray.sort((a, b) => new Date(b.data_manutencao) - new Date(a.data_manutencao));
-                manutArray.forEach(m => {
-                    let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirManutencao('${m.id}', event)"><span class="material-icons">delete</span></button>` : '';
-                    lista.innerHTML += `<div class="card-item manutencao"><h4>${m.veiculo_nome} - Oficina</h4><p>Data: ${new Date(m.data_manutencao).toLocaleDateString('pt-BR')} | Custo: R$ ${m.custo.toFixed(2)}</p><p style="color:#666;"><b>${m.tipo}</b> - ${m.descricao}</p>${btnExcluir}</div>`;
-                });
-                if (_appPronto && isUserAdmin) carregarDashboard();
-                marcarCarregado('manutencoes');
-            }));
+            // 5 e 6: Apenas admin tem acesso a manutenções e custos fixos
+            if (isUserAdmin) {
+                _unsubs.push(onSnapshot(collection(db, "manutencoes"), (snap) => {
+                    const lista = document.getElementById('lista-manutencoes'); lista.innerHTML = ''; dbManutencoes = {}; let manutArray = [];
+                    snap.forEach(d => { const m = d.data(); dbManutencoes[d.id] = m; manutArray.push({ id: d.id, ...m }); });
+                    manutArray.sort((a, b) => new Date(b.data_manutencao) - new Date(a.data_manutencao));
+                    manutArray.forEach(m => {
+                        let btnExcluir = `<button class="btn-delete" onclick="excluirManutencao('${m.id}', event)"><span class="material-icons">delete</span></button>`;
+                        lista.innerHTML += `<div class="card-item manutencao"><h4>${m.veiculo_nome} - Oficina</h4><p>Data: ${new Date(m.data_manutencao).toLocaleDateString('pt-BR')} | Custo: R$ ${m.custo.toFixed(2)}</p><p style="color:#666;"><b>${m.tipo}</b> - ${m.descricao}</p>${btnExcluir}</div>`;
+                    });
+                    if (_appPronto) carregarDashboard();
+                    marcarCarregado('manutencoes');
+                }));
 
-            // 6. Custos Fixos
-            _unsubs.push(onSnapshot(collection(db, "custos_fixos"), (snap) => {
-                const lista = document.getElementById('lista-custos-fixos'); lista.innerHTML = ''; dbCustosFixos = {}; let arrayCustos = [];
-                snap.forEach(d => { const c = d.data(); dbCustosFixos[d.id] = c; arrayCustos.push({ id: d.id, ...c }); });
-                arrayCustos.sort((a, b) => new Date(b.data_pagamento) - new Date(a.data_pagamento));
-                arrayCustos.forEach(c => {
-                    let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirCustoFixo('${c.id}', event)"><span class="material-icons">delete</span></button>` : '';
-                    lista.innerHTML += `<div class="card-item custo-fixo"><h4>${c.descricao}</h4><p><b>Data:</b> ${new Date(c.data_pagamento).toLocaleDateString('pt-BR')} | <b>Cat:</b> ${c.categoria}</p><p style="color:#c62828; font-weight:bold;">Valor: R$ ${c.valor.toFixed(2)}</p>${btnExcluir}</div>`;
-                });
-                if (_appPronto && isUserAdmin) carregarDashboard();
-                marcarCarregado('custos_fixos');
-            }));
+                _unsubs.push(onSnapshot(collection(db, "custos_fixos"), (snap) => {
+                    const lista = document.getElementById('lista-custos-fixos'); lista.innerHTML = ''; dbCustosFixos = {}; let arrayCustos = [];
+                    snap.forEach(d => { const c = d.data(); dbCustosFixos[d.id] = c; arrayCustos.push({ id: d.id, ...c }); });
+                    arrayCustos.sort((a, b) => new Date(b.data_pagamento) - new Date(a.data_pagamento));
+                    arrayCustos.forEach(c => {
+                        let btnExcluir = `<button class="btn-delete" onclick="excluirCustoFixo('${c.id}', event)"><span class="material-icons">delete</span></button>`;
+                        lista.innerHTML += `<div class="card-item custo-fixo"><h4>${c.descricao}</h4><p><b>Data:</b> ${new Date(c.data_pagamento).toLocaleDateString('pt-BR')} | <b>Cat:</b> ${c.categoria}</p><p style="color:#c62828; font-weight:bold;">Valor: R$ ${c.valor.toFixed(2)}</p>${btnExcluir}</div>`;
+                    });
+                    if (_appPronto) carregarDashboard();
+                    marcarCarregado('custos_fixos');
+                }));
+            }
 
             // 7. Pagamentos / Vales
             _unsubs.push(onSnapshot(collection(db, "pagamentos_motoristas"), (snap) => {
