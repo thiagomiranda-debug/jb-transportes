@@ -161,36 +161,41 @@
         /* ===== CARDS OPERACIONAIS (Veículos, Motoristas, Viagens) ===== */
         .grid-operacional { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
         .card-op {
-            background: #fff; border-radius: 12px; padding: 16px 14px 14px;
+            background: #fff; border-radius: 12px; padding: 12px 12px 48px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: relative;
-            border-top: 4px solid #1a237e; min-height: 110px;
-            display: flex; flex-direction: column; gap: 4px;
-            transition: box-shadow 0.15s, transform 0.15s; cursor: default;
+            border-top: 4px solid #1a237e;
+            display: flex; flex-direction: column; gap: 3px;
+            transition: box-shadow 0.15s; cursor: default;
         }
         .card-op.em-curso  { border-top-color: #f9a825; }
         .card-op.concluida { border-top-color: #2e7d32; }
         .card-op.inativo, .card-op.desligado, .card-op.afastado { border-top-color: #9e9e9e; opacity: 0.75; }
         .card-op.manutencao { border-top-color: #e65100; }
         .card-op.alerta    { border-top-color: #c62828; }
-        .card-op-titulo { font-size: 13px; font-weight: 700; color: #1a237e; line-height: 1.3; padding-right: 30px; }
+        .card-op-titulo { font-size: 13px; font-weight: 700; color: #1a237e; line-height: 1.3; }
         .card-op-sub    { font-size: 11px; color: #666; line-height: 1.5; }
         .card-op-valor  { font-size: 15px; font-weight: 800; color: #1a237e; margin-top: 4px; }
+        /* Badge: linha própria no topo, não absoluto — evita sobreposição no mobile */
         .card-op-badge  {
-            position: absolute; top: 10px; right: 10px;
-            font-size: 9px; font-weight: 700; padding: 2px 7px;
+            display: inline-block; align-self: flex-start;
+            font-size: 9px; font-weight: 700; padding: 2px 8px;
             border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 3px;
         }
         .badge-em-curso  { background: #fff8e1; color: #f57f17; }
         .badge-concluida { background: #e8f5e9; color: #2e7d32; }
         .badge-inativo, .badge-desligado, .badge-afastado { background: #f5f5f5; color: #757575; }
         .badge-ativo     { background: #e8eaf6; color: #1a237e; }
         .badge-manutencao { background: #fff3e0; color: #e65100; }
-        .card-op-alerta-box { font-size: 10px; color: #c62828; margin-top: 4px; background: #ffebee; padding: 3px 7px; border-radius: 4px; display: inline-block; }
-        .card-op .btn-delete { position: absolute; bottom: 10px; right: 10px; }
+        .card-op-alerta-box { font-size: 10px; color: #c62828; margin-top: 3px; background: #ffebee; padding: 3px 7px; border-radius: 4px; display: inline-block; }
+        /* Botões fixos no rodapé do card */
+        .card-op .btn-delete { position: absolute; bottom: 8px; right: 8px; }
+        .card-op .btn-edit   { position: absolute; bottom: 8px; right: 50px; }
         .card-op .btn-fechar-viagem {
-            margin-top: 8px; padding: 6px 10px; font-size: 11px; font-weight: 700;
+            position: absolute; bottom: 8px; left: 12px; right: 8px;
+            padding: 7px 10px; font-size: 11px; font-weight: 700;
             background: #2e7d32; color: white; border: none; border-radius: 6px;
-            cursor: pointer; width: 100%;
+            cursor: pointer; text-align: center;
         }
         .card-op .lucro-positivo { color: #2e7d32; }
         .card-op .lucro-negativo { color: #c62828; }
@@ -622,7 +627,12 @@
                             <button type="submit" class="btn-submit" style="background: #e65100;"><span class="material-icons">build</span> Registrar Despesa de Oficina</button>
                         </form>
                     </div>
-                    <div id="lista-manutencoes" class="item-list"></div>
+                    <div class="viagens-filtro-bar" style="margin-top:12px;">
+                        <label><span class="material-icons" style="font-size:16px;vertical-align:middle;">calendar_month</span> Competência:</label>
+                        <input type="month" id="manut-mes-filtro">
+                        <span class="v-resumo" id="manut-resumo-filtro"></span>
+                    </div>
+                    <div id="lista-manutencoes" class="grid-operacional"></div>
                 </div>
 
                 <div id="tela-relatorios" class="tela">
@@ -1013,13 +1023,9 @@
             // 5 e 6: Apenas admin tem acesso a manutenções e custos fixos
             if (isUserAdmin) {
                 _unsubs.push(onSnapshot(collection(db, "manutencoes"), (snap) => {
-                    const lista = document.getElementById('lista-manutencoes'); lista.innerHTML = ''; dbManutencoes = {}; let manutArray = [];
-                    snap.forEach(d => { const m = d.data(); dbManutencoes[d.id] = m; manutArray.push({ id: d.id, ...m }); });
-                    manutArray.sort((a, b) => new Date(b.data_manutencao) - new Date(a.data_manutencao));
-                    manutArray.forEach(m => {
-                        let btnExcluir = `<button class="btn-delete" onclick="excluirManutencao('${m.id}', event)"><span class="material-icons">delete</span></button>`;
-                        lista.innerHTML += `<div class="card-item manutencao"><h4>${m.veiculo_nome} - Oficina</h4><p>Data: ${new Date(m.data_manutencao).toLocaleDateString('pt-BR')} | Custo: R$ ${m.custo.toFixed(2)}</p><p style="color:#666;"><b>${m.tipo}</b> - ${m.descricao}</p>${btnExcluir}</div>`;
-                    });
+                    dbManutencoes = {};
+                    snap.forEach(d => { dbManutencoes[d.id] = { id: d.id, ...d.data() }; });
+                    renderizarManutencoes();
                     if (_appPronto) carregarDashboard();
                     marcarCarregado('manutencoes');
                 }));
@@ -1166,6 +1172,9 @@
             if(telaId === 'manutencoes' && isUserAdmin) {
                 const mVeic = document.getElementById('man-veiculo'); mVeic.innerHTML = ''; for(let id in dbVeiculos) { mVeic.innerHTML += `<option value="${id}">${dbVeiculos[id].placa} - ${dbVeiculos[id].modelo}</option>`; }
                 document.getElementById('man-data').value = new Date().toISOString().split('T')[0]; document.getElementById('man-tipo').dispatchEvent(new Event('change'));
+                const elMF = document.getElementById('manut-mes-filtro');
+                if (elMF && !elMF.value) { const h = new Date(); elMF.value = h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0'); }
+                renderizarManutencoes();
             }
             if(telaId === 'custos' && isUserAdmin) { document.getElementById('cf-data').value = new Date().toISOString().split('T')[0]; }
         };
@@ -1282,6 +1291,44 @@
 
         document.getElementById('dash-mes-filtro').addEventListener('change', carregarDashboard);
         document.getElementById('viagens-mes-filtro').addEventListener('change', () => renderizarViagens());
+        document.getElementById('manut-mes-filtro').addEventListener('change', () => renderizarManutencoes());
+
+        window.renderizarManutencoes = function() {
+            const lista = document.getElementById('lista-manutencoes');
+            if (!lista) return;
+            const elFiltro = document.getElementById('manut-mes-filtro');
+            const mesFiltro = elFiltro ? elFiltro.value : '';
+            lista.innerHTML = '';
+
+            let arr = Object.values(dbManutencoes);
+            arr.sort((a, b) => new Date(b.data_manutencao) - new Date(a.data_manutencao));
+
+            let exibidas = 0, totalCusto = 0;
+            arr.forEach(m => {
+                if (mesFiltro && m.data_manutencao) {
+                    if (String(m.data_manutencao).slice(0, 7) !== mesFiltro) return;
+                }
+                exibidas++;
+                totalCusto += m.custo || 0;
+                const fmtD = new Date(m.data_manutencao + 'T12:00:00').toLocaleDateString('pt-BR');
+                const btnExcluir = `<button class="btn-delete" onclick="excluirManutencao('${m.id}', event)"><span class="material-icons">delete</span></button>`;
+                lista.innerHTML += `<div class="card-op manutencao">
+                    <span class="card-op-badge badge-manutencao">Oficina</span>
+                    <div class="card-op-titulo">${m.veiculo_nome}</div>
+                    <div class="card-op-sub">${fmtD} &nbsp;|&nbsp; ${m.tipo}</div>
+                    <div class="card-op-valor" style="color:#e65100;">R$ ${(m.custo||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                    <div class="card-op-sub">${m.descricao}</div>
+                    ${btnExcluir}
+                </div>`;
+            });
+
+            const elResumo = document.getElementById('manut-resumo-filtro');
+            if (elResumo) {
+                elResumo.textContent = exibidas === 0
+                    ? 'Nenhum serviço no período.'
+                    : `${exibidas} serviço(s) · Total: R$ ${totalCusto.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            }
+        };
 
         function carregarDashboard() {
             try {
