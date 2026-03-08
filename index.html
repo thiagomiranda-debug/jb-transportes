@@ -52,8 +52,9 @@
         .btn-export { background: #2e7d32; } .btn-export:hover { background: #1b5e20; }
         
         /* ===== CARDS DE ITENS ===== */
-        .item-list { display: grid; gap: 10px; margin-top: 12px; }
-        .card-item { background: #fff; padding: 14px; border-radius: 10px; border-left: 5px solid #4CAF50; box-shadow: 0 2px 5px rgba(0,0,0,0.07); position: relative; }
+        .item-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
+        .item-list.lista-unica { grid-template-columns: 1fr; } /* acerto, extrato — mantém coluna única */
+        .card-item { background: #fff; padding: 14px; border-radius: 10px; border-left: 5px solid #4CAF50; box-shadow: 0 2px 5px rgba(0,0,0,0.07); position: relative; min-height: 90px; }
         .card-item.inativo, .card-item.desligado { border-left-color: #9E9E9E; opacity: 0.7; }
         .card-item.em-curso { border-left-color: #FFC107; }
         .card-item.manutencao { border-left-color: #e65100; }
@@ -70,6 +71,8 @@
         /* ===== BOTÃO DELETE ===== */
         .btn-delete { position: absolute; bottom: 12px; right: 12px; background: none; border: none; color: #c62828; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: 50%; transition: 0.2s; min-width: 36px; min-height: 36px; touch-action: manipulation; }
         .btn-delete:hover, .btn-delete:active { background: #ffebee; }
+        .btn-edit { position: absolute; bottom: 12px; right: 52px; background: none; border: none; color: #e65100; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: 50%; transition: 0.2s; min-width: 36px; min-height: 36px; touch-action: manipulation; }
+        .btn-edit:hover, .btn-edit:active { background: #fff3e0; }
 
         /* ===== LOGIN ===== */
         #tela-login { height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #1a237e; flex-direction: column; padding: 20px; }
@@ -155,7 +158,59 @@
             @page { margin: 15mm 12mm; size: A4 landscape; }
         }
 
-        /* ===== BI CARDS CLICÁVEIS ===== */
+        /* ===== CARDS OPERACIONAIS (Veículos, Motoristas, Viagens) ===== */
+        .grid-operacional { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+        .card-op {
+            background: #fff; border-radius: 12px; padding: 16px 14px 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: relative;
+            border-top: 4px solid #1a237e; min-height: 110px;
+            display: flex; flex-direction: column; gap: 4px;
+            transition: box-shadow 0.15s, transform 0.15s; cursor: default;
+        }
+        .card-op.em-curso  { border-top-color: #f9a825; }
+        .card-op.concluida { border-top-color: #2e7d32; }
+        .card-op.inativo, .card-op.desligado, .card-op.afastado { border-top-color: #9e9e9e; opacity: 0.75; }
+        .card-op.manutencao { border-top-color: #e65100; }
+        .card-op.alerta    { border-top-color: #c62828; }
+        .card-op-titulo { font-size: 13px; font-weight: 700; color: #1a237e; line-height: 1.3; padding-right: 30px; }
+        .card-op-sub    { font-size: 11px; color: #666; line-height: 1.5; }
+        .card-op-valor  { font-size: 15px; font-weight: 800; color: #1a237e; margin-top: 4px; }
+        .card-op-badge  {
+            position: absolute; top: 10px; right: 10px;
+            font-size: 9px; font-weight: 700; padding: 2px 7px;
+            border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .badge-em-curso  { background: #fff8e1; color: #f57f17; }
+        .badge-concluida { background: #e8f5e9; color: #2e7d32; }
+        .badge-inativo, .badge-desligado, .badge-afastado { background: #f5f5f5; color: #757575; }
+        .badge-ativo     { background: #e8eaf6; color: #1a237e; }
+        .badge-manutencao { background: #fff3e0; color: #e65100; }
+        .card-op-alerta-box { font-size: 10px; color: #c62828; margin-top: 4px; background: #ffebee; padding: 3px 7px; border-radius: 4px; display: inline-block; }
+        .card-op .btn-delete { position: absolute; bottom: 10px; right: 10px; }
+        .card-op .btn-fechar-viagem {
+            margin-top: 8px; padding: 6px 10px; font-size: 11px; font-weight: 700;
+            background: #2e7d32; color: white; border: none; border-radius: 6px;
+            cursor: pointer; width: 100%;
+        }
+        .card-op .lucro-positivo { color: #2e7d32; }
+        .card-op .lucro-negativo { color: #c62828; }
+
+        /* Filtro de competência viagens */
+        .viagens-filtro-bar {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            background: #fff; border-radius: 10px; padding: 10px 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.07); margin-top: 12px;
+        }
+        .viagens-filtro-bar label { font-size: 12px; font-weight: 700; color: #1a237e; white-space: nowrap; }
+        .viagens-filtro-bar input[type=month] {
+            padding: 7px 10px; border: 1.5px solid #1a237e; border-radius: 7px;
+            font-weight: 700; color: #1a237e; font-size: 13px; cursor: pointer; background: #f5f7ff;
+        }
+        .viagens-filtro-bar .v-resumo { font-size: 12px; color: #555; margin-left: auto; }
+
+        @media (min-width: 768px) {
+            .grid-operacional { grid-template-columns: repeat(3, 1fr); }
+        }
         .bi-card-click { transition: box-shadow 0.2s, transform 0.15s !important; }
         .bi-card-click:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.13) !important; transform: translateY(-2px); }
         .bi-card-click:active { transform: translateY(0); }
@@ -171,6 +226,7 @@
             .modal-box { border-radius: 12px; width: 95%; max-width: 520px; animation: none; }
             .kpi-grid { grid-template-columns: repeat(4, 1fr); }
             .data-table th, .data-table td { padding: 10px; font-size: 13px; }
+            .item-list { grid-template-columns: repeat(3, 1fr); }
         }
     </style>
 </head>
@@ -405,7 +461,7 @@
                             <button type="submit" class="btn-submit"><span class="material-icons">save</span> Salvar Veículo</button>
                         </form>
                     </div>
-                    <div id="lista-veiculos" class="item-list"></div>
+                    <div id="lista-veiculos" class="grid-operacional"></div>
                 </div>
 
                 <div id="tela-motoristas" class="tela">
@@ -431,7 +487,7 @@
                             <button type="submit" class="btn-submit" id="btn-salvar-mot" style="margin-top: 15px;"><span class="material-icons">save</span> Salvar Motorista</button>
                         </form>
                     </div>
-                    <div id="lista-motoristas" class="item-list"></div>
+                    <div id="lista-motoristas" class="grid-operacional"></div>
                 </div>
 
                 <div id="tela-viagens" class="tela">
@@ -467,7 +523,13 @@
                             <button type="submit" class="btn-submit"><span class="material-icons">rocket_launch</span> Lançar Viagem no Sistema</button>
                         </form>
                     </div>
-                    <div id="lista-viagens" class="item-list"></div>
+                    <!-- Filtro de competência -->
+                    <div class="viagens-filtro-bar">
+                        <label><span class="material-icons" style="font-size:16px;vertical-align:middle;">calendar_month</span> Competência:</label>
+                        <input type="month" id="viagens-mes-filtro">
+                        <span class="v-resumo" id="viagens-resumo-filtro"></span>
+                    </div>
+                    <div id="lista-viagens" class="grid-operacional"></div>
                 </div>
 
                 <!-- MÓDULO DE ACERTO COM PDF E WHATSAPP -->
@@ -814,8 +876,25 @@
                     }
                     let boxAv = avisos.length > 0 ? `<div class="badges-container">${avisos.join('')}</div>` : '';
                     let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirVeiculo('${documento.id}', event)"><span class="material-icons">delete</span></button>` : '';
-                    let acaoClick = isUserAdmin ? `onclick="editarVeiculo('${documento.id}')" style="cursor:pointer;"` : '';
-                    lista.innerHTML += `<div class="card-item ${clAlerta}" ${acaoClick}>${boxAv}<h4>${v.modelo} (${v.placa})</h4><p><b>KM Atual: ${v.km_atual.toLocaleString('pt-BR')}</b></p><p style="font-size:11px; color:#666;">ANTT: ${v.antt ? new Date(v.antt).toLocaleDateString('pt-BR') : '-'} | Crono: ${v.crono ? new Date(v.crono).toLocaleDateString('pt-BR') : '-'} | IPVA: ${v.ipva ? new Date(v.ipva).toLocaleDateString('pt-BR') : '-'}</p>${btnExcluir}</div>`;
+                    let btnEditar  = isUserAdmin ? `<button class="btn-edit"   onclick="editarVeiculo('${documento.id}'); event.stopPropagation();"><span class="material-icons">edit</span></button>` : '';
+                    let acaoClick = '';
+                    const statusLabel = { ativo:'Ativo', manutencao:'Em Oficina', inativo:'Inativo' }[v.status] || v.status;
+                    const badgeCls = { ativo:'badge-ativo', manutencao:'badge-manutencao', inativo:'badge-inativo' }[v.status] || 'badge-inativo';
+                    const alertasHtml = avisos.length > 0 ? `<div class="card-op-alerta-box">${avisos.map(a=>a.replace(/<[^>]+>/g,'')).join(' · ')}</div>` : '';
+                    lista.innerHTML += `<div class="card-op ${clAlerta}" ${acaoClick}>
+                        <span class="card-op-badge ${badgeCls}">${statusLabel}</span>
+                        <div class="card-op-titulo">${v.modelo}</div>
+                        <div class="card-op-sub">${v.placa} · ${v.tipo || ''} · ${v.combustivel || ''}</div>
+                        <div class="card-op-valor">${v.km_atual ? v.km_atual.toLocaleString('pt-BR') + ' km' : '—'}</div>
+                        <div class="card-op-sub" style="margin-top:2px;">
+                            ANTT: ${v.antt ? new Date(v.antt).toLocaleDateString('pt-BR') : '—'} &nbsp;|&nbsp;
+                            Crono: ${v.crono ? new Date(v.crono).toLocaleDateString('pt-BR') : '—'} &nbsp;|&nbsp;
+                            IPVA: ${v.ipva ? new Date(v.ipva).toLocaleDateString('pt-BR') : '—'}
+                        </div>
+                        ${alertasHtml}
+                        ${btnEditar}
+                        ${btnExcluir}
+                    </div>`;
                 });
                 atualizarPainelGlobalDeAlertas();
                 if (_appPronto && isUserAdmin) carregarDashboard();
@@ -836,8 +915,22 @@
                     }
                     let boxAv = avisos.length > 0 ? `<div class="badges-container">${avisos.join('')}</div>` : '';
                     let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirMotorista('${documento.id}', event)"><span class="material-icons">delete</span></button>` : '';
-                    let acaoClick = isUserAdmin ? `onclick="editarMotorista('${documento.id}')" style="cursor:pointer;"` : '';
-                    lista.innerHTML += `<div class="card-item ${clAlerta}" ${acaoClick}>${boxAv}<h4>${m.nome}</h4><p>Comissão: ${m.comissao || 0}% | Login: ${m.email_acesso || 'Não configurado'}</p>${btnExcluir}</div>`;
+                    let btnEditar  = isUserAdmin ? `<button class="btn-edit"   onclick="editarMotorista('${documento.id}'); event.stopPropagation();"><span class="material-icons">edit</span></button>` : '';
+                    let acaoClick = '';
+                    const stLabel = { ativo:'Ativo', afastado:'Afastado', desligado:'Desligado' }[m.status] || m.status;
+                    const stBadge = { ativo:'badge-ativo', afastado:'badge-afastado', desligado:'badge-desligado' }[m.status] || 'badge-inativo';
+                    const alertasMotHtml = avisos.length > 0 ? `<div class="card-op-alerta-box">${avisos.map(a=>a.replace(/<[^>]+>/g,'')).join(' · ')}</div>` : '';
+                    const telHtml = m.telefone ? `<a href="tel:${m.telefone}" style="color:#1a237e;text-decoration:none;font-weight:700;">📞 ${m.telefone}</a>` : '';
+                    lista.innerHTML += `<div class="card-op ${clAlerta}" ${acaoClick}>
+                        <span class="card-op-badge ${stBadge}">${stLabel}</span>
+                        <div class="card-op-titulo">${m.nome}</div>
+                        <div class="card-op-sub">Comissão: <b>${m.comissao || 0}%</b></div>
+                        <div class="card-op-sub">CNH: ${m.cnh_val ? new Date(m.cnh_val).toLocaleDateString('pt-BR') : '—'} &nbsp;|&nbsp; Tox: ${m.toxicologico ? new Date(m.toxicologico).toLocaleDateString('pt-BR') : '—'}</div>
+                        <div class="card-op-sub" style="margin-top:2px;">${telHtml}</div>
+                        ${alertasMotHtml}
+                        ${btnEditar}
+                        ${btnExcluir}
+                    </div>`;
                 });
                 if (!isUserAdmin && auth.currentUser) { const mEntry = Object.entries(dbMotoristas).find(([id, m]) => m.email_acesso && m.email_acesso === auth.currentUser.email.toLowerCase()); meuMotoristaId = mEntry ? mEntry[0] : null; if (_appPronto && document.getElementById('tela-dashboard').classList.contains('ativa')) carregarDashboard(); }
                 atualizarPainelGlobalDeAlertas();
@@ -845,27 +938,77 @@
                 marcarCarregado('motoristas');
             }));
 
-            // 4. Viagens
+            // 4. Viagens — snapshot salva dbViagens e delega render para renderizarViagens()
             _unsubs.push(onSnapshot(collection(db, "viagens"), (snap) => {
-                const lista = document.getElementById('lista-viagens'); lista.innerHTML = ''; dbViagens = {}; let viagensArray = [];
-                snap.forEach(documento => { const v = documento.data(); dbViagens[documento.id] = v; viagensArray.push({ id: documento.id, ...v }); });
-                viagensArray.sort((a, b) => new Date(b.data_saida) - new Date(a.data_saida));
-                viagensArray.forEach(v => {
-                    if (!isUserAdmin && v.motorista_id !== meuMotoristaId) return;
-                    let dataS = v.data_saida ? new Date(v.data_saida).toLocaleString('pt-BR') : '';
-                    let btnFechar = v.status === 'em_curso' ? `<button onclick="abrirModalRetorno('${v.id}')" class="btn-submit" style="background:#2e7d32; margin-top:10px;">📍 Fechar Viagem</button>` : '';
-                    let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirViagem('${v.id}', event)"><span class="material-icons">delete</span></button>` : '';
-                    let infoLucro = '';
-                    if (v.status === 'concluida') {
-                        let baseInfo = `<p><b>Média:</b> ${(v.media_kml || 0).toFixed(1)} km/l</p>`;
-                        if (isUserAdmin) { infoLucro = `<div style="margin-top:8px; padding:8px; background:#f5f5f5; border-radius:4px;">${baseInfo}<p><b>Comissão Acumulada:</b> R$ ${(v.valor_comissao || 0).toFixed(2)}</p><p class="${(v.lucro_liquido || 0) >= 0 ? 'lucro-positivo' : 'lucro-negativo'}"><b>Lucro Líquido: R$ ${(v.lucro_liquido || 0).toFixed(2)}</b></p></div>`; }
-                        else { infoLucro = `<div style="margin-top:8px; padding:8px; background:#f5f5f5; border-radius:4px;">${baseInfo}<p>🏁 Concluída</p></div>`; }
-                    }
-                    lista.innerHTML += `<div class="card-item ${v.status.replace('_', '-')}"><h4>${v.contratante || ''} - ${v.destino}</h4><p>V: ${v.veiculo_nome} | M: ${v.motorista_nome}</p><p>Saída: ${dataS}</p>${btnFechar}${infoLucro}${btnExcluir}</div>`;
-                });
+                dbViagens = {};
+                snap.forEach(documento => { dbViagens[documento.id] = { id: documento.id, ...documento.data() }; });
+                renderizarViagens();
                 if (_appPronto && document.getElementById('tela-dashboard').classList.contains('ativa')) carregarDashboard();
                 marcarCarregado('viagens');
             }));
+
+        // ── RENDER VIAGENS COM FILTRO DE COMPETÊNCIA ──────────────────────
+        window.renderizarViagens = function renderizarViagens() {
+            const lista = document.getElementById('lista-viagens');
+            if (!lista) return;
+            const elFiltro = document.getElementById('viagens-mes-filtro');
+            const mesFiltro = elFiltro ? elFiltro.value : ''; // "YYYY-MM" ou ''
+            lista.innerHTML = '';
+
+            let viagensArray = Object.values(dbViagens);
+            viagensArray.sort((a, b) => new Date(b.data_saida) - new Date(a.data_saida));
+
+            let total = 0, exibidas = 0, emCurso = 0, concluidas = 0;
+
+            viagensArray.forEach(v => {
+                if (!isUserAdmin && v.motorista_id !== meuMotoristaId) return;
+                total++;
+
+                // Filtro de competência por mês — extrai YYYY-MM direto da string
+                if (mesFiltro && v.data_saida) {
+                    const anoMes = String(v.data_saida).slice(0, 7); // "YYYY-MM"
+                    if (anoMes !== mesFiltro) return;
+                }
+
+                exibidas++;
+                if (v.status === 'em_curso') emCurso++;
+                if (v.status === 'concluida') concluidas++;
+
+                let dataS = v.data_saida ? new Date(v.data_saida).toLocaleString('pt-BR') : '';
+                let btnExcluir = isUserAdmin ? `<button class="btn-delete" onclick="excluirViagem('${v.id}', event)"><span class="material-icons">delete</span></button>` : '';
+
+                const statusTxt = { em_curso: 'Em Curso', concluida: 'Concluída' }[v.status] || v.status;
+                const stBadgeV  = v.status === 'em_curso' ? 'badge-em-curso' : 'badge-concluida';
+
+                const lucroHtml = (v.status === 'concluida' && isUserAdmin)
+                    ? `<div class="card-op-valor ${(v.lucro_liquido||0) >= 0 ? 'lucro-positivo' : 'lucro-negativo'}">R$ ${(v.lucro_liquido||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                       <div class="card-op-sub">Média: ${(v.media_kml||0).toFixed(1)} km/l &nbsp;|&nbsp; Com: R$ ${(v.valor_comissao||0).toFixed(2)}</div>`
+                    : (v.status === 'concluida' ? `<div class="card-op-sub" style="margin-top:4px;">🏁 Concluída · Média: ${(v.media_kml||0).toFixed(1)} km/l</div>` : '');
+
+                const btnFecharCard = v.status === 'em_curso'
+                    ? `<button class="btn-fechar-viagem" onclick="abrirModalRetorno('${v.id}')">📍 Fechar Viagem</button>` : '';
+
+                lista.innerHTML += `<div class="card-op ${v.status.replace('_','-')}">
+                    <span class="card-op-badge ${stBadgeV}">${statusTxt}</span>
+                    <div class="card-op-titulo">${v.contratante || ''} → ${v.destino}</div>
+                    <div class="card-op-sub">${v.veiculo_nome} &nbsp;|&nbsp; ${v.motorista_nome}</div>
+                    <div class="card-op-sub">Saída: ${dataS} &nbsp;|&nbsp; ${v.distancia ? v.distancia+' km' : '—'}</div>
+                    ${lucroHtml}
+                    ${btnFecharCard}
+                    ${btnExcluir}
+                </div>`;
+            });
+
+            // Resumo no filtro bar
+            const elResumo = document.getElementById('viagens-resumo-filtro');
+            if (elResumo) {
+                if (exibidas === 0) {
+                    elResumo.textContent = 'Nenhuma viagem no período.';
+                } else {
+                    elResumo.textContent = `${exibidas} viagem(ns)  ·  ${emCurso} em curso  ·  ${concluidas} concluída(s)`;
+                }
+            }
+        }
 
             // 5 e 6: Apenas admin tem acesso a manutenções e custos fixos
             if (isUserAdmin) {
@@ -1010,6 +1153,10 @@
             if(telaId === 'dashboard') carregarDashboard();
             if(telaId === 'viagens') {
                 carregarDropdownsViagem(); const agora = new Date(); agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset()); document.getElementById('vi-data-saida').value = agora.toISOString().slice(0, 16);
+                // Inicializa filtro de mês com o mês atual se ainda não definido
+                const elFV = document.getElementById('viagens-mes-filtro');
+                if (elFV && !elFV.value) { const h = new Date(); elFV.value = h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0'); }
+                renderizarViagens();
             }
             if(telaId === 'acertos' && isUserAdmin) {
                 const sel = document.getElementById('acerto-motorista'); sel.innerHTML = '<option value="">Selecione o Motorista...</option>'; for(let id in dbMotoristas) { sel.innerHTML += `<option value="${id}">${dbMotoristas[id].nome}</option>`; }
@@ -1134,6 +1281,7 @@
         };
 
         document.getElementById('dash-mes-filtro').addEventListener('change', carregarDashboard);
+        document.getElementById('viagens-mes-filtro').addEventListener('change', () => renderizarViagens());
 
         function carregarDashboard() {
             try {
